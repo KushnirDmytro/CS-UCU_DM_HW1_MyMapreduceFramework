@@ -4,20 +4,22 @@ import time
 import sys
 import re
 import operator
+import utils
 
 
 def map(filename, diapasone=()):
     start = time.perf_counter()
 
-    with open(filename, 'r') as myfile:
-        regEx = re.compile(r'[a-zA-Z0-9]+')
-        data = [word.lower() for line in myfile for word in regEx.findall(line)]
-        print("data_been_red", len(data))
+
+    list_of_lines = utils.read_from_raw_txt(filename)
+    regEx = re.compile(r'[a-zA-Z0-9]+')
+    data = [word.lower() for line in list_of_lines for word in regEx.findall(line)]
+    print("data_been_red", len(data))
+
 
     list_of_tuples = []
 
     for word in data:
-        #TODO clean trash from words (letter and symbols invariant)
         list_of_tuples.append((word, 1))
 
     end = time.perf_counter()

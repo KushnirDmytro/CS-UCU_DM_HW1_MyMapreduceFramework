@@ -8,6 +8,7 @@ from Worker import Worker
 
 
 
+
 class MapReduceManeger:
 
 
@@ -52,9 +53,10 @@ class MapReduceManeger:
         for task_type in self.tasks:
             print("cheking {}".format(task_type))
             for task in self.tasks[task_type]:
-                if task.is_idle:
+                if task.is_idle():
                     new_worker = self.spawn_worker(task)
                     try:
+                        task.set_status('active')
                         new_worker.execute()
                     except Exception:
                         new_worker.set_status('error')

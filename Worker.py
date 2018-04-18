@@ -42,8 +42,8 @@ class Worker:
 
 
 
-    def write_res_to(self, filename):
-        pass
+    # def write_res_to(self, filename):
+    #     pass
 
     def set_task(self, task):
         if self.is_idle:
