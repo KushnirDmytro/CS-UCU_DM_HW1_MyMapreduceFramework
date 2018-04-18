@@ -15,17 +15,18 @@ if ('-h' in sys.argv or '--help' in sys.argv):
 
 default_config_file = "config.json"
 
+config={}
 
 if len (sys.argv) > 1:
     config_filename = sys.argv[1]
-    try:
-        with open(config_filename) as cfg:
-            config = json.loads(cfg.read())
-    except FileExistsError:
-        print("config file reading from {} problem".format(config_filename))
 else:
     config_filename = default_config_file
 
+try:
+    with open(config_filename) as cfg:
+        config = json.loads(cfg.read())
+except FileExistsError:
+    print("config file reading from {} problem".format(config_filename))
 
 
 cmd = "example_word_counter_mapper.py data.txt worker_{}_"
@@ -37,9 +38,9 @@ start = time.perf_counter()
 
 
 mappers=[]
-for i in range(1):
+for i in range(int (config['mappers_n']) ):
     cmd.format(i)
-    mappers.append(Popen([sys.executable, "-u", "example_word_counter_mapper.py", "data.txt", "worker_{}_".format(i)], stdout=PIPE, bufsize=1))
+    mappers.append(Popen([sys.executable, "-u", "example_word_counter_mapper.py", "data.txt", "map_worker_{}_.txt".format(i)], stdout=PIPE, bufsize=1))
 
 for pr in mappers:
     for line in iter(pr.stdout.readline, b''):
@@ -50,11 +51,28 @@ for pr in mappers:
 mappers_exit_codes = [p.wait() for p in mappers]
 
 
+reducers_input_diapasone=[]
+
+split_size = config['mappers_n'] // config['reducers_n']
+
+last_diapasone_end = 0
+for i in range(config['reducers_n']):
+    if (i == config['reducers_n'] - 1):
+        reducers_input_diapasone.append((last_diapasone_end, config['mappers_n']))
+    else:
+        reducers_input_diapasone.append((last_diapasone_end, last_diapasone_end+split_size))
+
+    last_diapasone_end+= split_size
+
+
 reducers = []
-for i in range(1):
+for i in range(config['reducers_n']):
     cmd.format(i)
-    reducers.append(Popen([sys.executable, "-u", "example_word_counter_reducer.py", "res_worker_0_.txt", "reducer_{}_".format(i)],
-                          stdout=PIPE, bufsize=1))
+    for diapasone in reducers_input_diapasone:
+        for task_n in range(diapasone[0], diapasone[1]):
+            from_file = "map_worker_{}_.txt".format(i)
+            reducers.append(Popen([sys.executable, "-u", "example_word_counter_reducer.py", from_file, "result_reducer_{}_".format(task_n)],
+                              stdout=PIPE, bufsize=1))
 
 for pr in reducers:
     for line in iter(pr.stdout.readline, b''):

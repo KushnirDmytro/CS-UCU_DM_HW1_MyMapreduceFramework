@@ -22,8 +22,7 @@ def reduce (filename, to_file=""):
             i+=1
             if i%100000 == 0:
                 print("iter ", i)
-                print("dict_size", len (dict))
-        # print (data)
+
 
     return dict
 
@@ -39,7 +38,7 @@ print ("HELLO SUBROC ={}=!!".format(worker_name))
 
 resulting_dict_of_tuples = reduce(filename=data_file)
 
-out_file_name = "reducer_{}.txt".format(worker_name)
+out_file_name = "reduce_worker_{}_.txt".format(worker_name)
 
 with open(out_file_name, 'w') as myfile:
     sorted_data = sorted(resulting_dict_of_tuples.items(), key=operator.itemgetter(1))

@@ -38,7 +38,7 @@ print ("HELLO SUBROC ={}=!!".format(worker_name))
 resulting_list_of_tuples = map(filename=data_file)
 
 
-out_file_name = "res_{}.txt".format(worker_name)
+out_file_name = worker_name
 
 with open(out_file_name, 'w') as myfile:
     for tuple in resulting_list_of_tuples:
