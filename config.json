@@ -1,0 +1,8 @@
+{
+  "mappers_n": 2,
+  "reducers_n":1,
+  "combiners":1,
+  "data_source":"data.txt",
+  "mapper_file_name": "example_word_counter_mapper.py",
+  "reducer_file_name":"example_word_counter_reducer.py"
+}
