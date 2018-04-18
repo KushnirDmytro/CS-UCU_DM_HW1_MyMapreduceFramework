@@ -5,7 +5,8 @@ import sys
 import re
 import operator
 
-def map(filename, args_from=0, args_to=None):
+
+def map(filename, diapasone=()):
     start = time.perf_counter()
 
     with open(filename, 'r') as myfile:
@@ -29,17 +30,20 @@ def map(filename, args_from=0, args_to=None):
 data_file = sys.argv[1]
 print ("data_File ", data_file)
 
-worker_name = sys.argv[2]
-print ("worker_name ", worker_name)
+out_file_name = sys.argv[2]
+print ("out_file_name ", out_file_name)
 
-print ("HELLO SUBROC ={}=!!".format(worker_name))
+# print ("HELLO SUBPROC ={}=!!".format(worker_name))
 
 
 resulting_list_of_tuples = map(filename=data_file)
 
 
-out_file_name = "res_{}.txt".format(worker_name)
 
-with open(out_file_name, 'w') as myfile:
-    for tuple in resulting_list_of_tuples:
-        myfile.write("%s : %d \n" % (tuple[0], tuple[1]))
+try:
+    with open(out_file_name, 'w') as myfile:
+        for tuple in resulting_list_of_tuples:
+            myfile.write("%s : %d \n" % (tuple[0], tuple[1]))
+except FileExistsError:
+    print('file {} problem'.format(out_file_name))
+

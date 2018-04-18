@@ -2,7 +2,7 @@
 import sys
 import operator
 
-def reduce (filename, to_file=""):
+def reduce (filename, diapasone=()):
 
     dict = {}
     with open(filename, 'r') as myfile:
@@ -10,7 +10,8 @@ def reduce (filename, to_file=""):
         data = [line for line in myfile]
         print("data_before_reduce", len(data))
 
-        i = 0
+        i = 100000
+        j = 0
         for line in data:
             word, number = line.split(' :')
             number = int(number)
@@ -19,10 +20,11 @@ def reduce (filename, to_file=""):
             else:
                 dict[word] = number
 
-            i+=1
-            if i%100000 == 0:
-                print("iter ", i)
-                print("dict_size", len (dict))
+            i-=1
+            if i == 0:
+                j+=1
+                i=100000
+                print("iter ", i*j)
         # print (data)
 
     return dict
@@ -31,20 +33,23 @@ def reduce (filename, to_file=""):
 data_file = sys.argv[1]
 print ("data_File ", data_file)
 
-worker_name = sys.argv[2]
-print ("worker_name ", worker_name)
+out_file_name = sys.argv[2]
+print ("out_file_name ", out_file_name)
 
-print ("HELLO SUBROC ={}=!!".format(worker_name))
 
 
 resulting_dict_of_tuples = reduce(filename=data_file)
 
-out_file_name = "reducer_{}.txt".format(worker_name)
 
-with open(out_file_name, 'w') as myfile:
-    sorted_data = sorted(resulting_dict_of_tuples.items(), key=operator.itemgetter(1))
-    for key, value in sorted_data:
-        myfile.write("%s : %d\n" % (key, value))
+
+
+try:
+    with open(out_file_name, 'w') as myfile:
+        sorted_data = sorted(resulting_dict_of_tuples.items(), reverse=True,  key=operator.itemgetter(1))
+        for key, value in sorted_data:
+            myfile.write("%s : %d \n" % (key, value) )
+except FileExistsError:
+    print('file {} problem'.format(out_file_name))
 
 
 
