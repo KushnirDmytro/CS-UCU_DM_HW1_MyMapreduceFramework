@@ -3,12 +3,19 @@ import os
 import time
 from subprocess import Popen, PIPE
 
+#TODO would be great to implement "Star map-reduce" algorithm
+#TODO one more example for mapreduce
+
+#TODO deal with python errors (via tuttorial)
+
+#TODO file chunking for mapper task (or should it be separate, like resource manager....)
+
 from MapReduceManeger import MapReduceManeger
 
-
-
+help_msg = "This program demonstrates workflow of the mapreduce framework"
 if ('-h' in sys.argv or '--help' in sys.argv):
     print (help_msg)
+
 
 cmd = "example_word_counter_mapper.py data.txt worker_{}_"
 

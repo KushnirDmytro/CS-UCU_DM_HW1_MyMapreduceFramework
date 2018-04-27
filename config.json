@@ -5,5 +5,7 @@
   "total_workers_number":1,
   "data_source":"data.txt",
   "mapper_file_name": "example_word_counter_mapper.py",
-  "reducer_file_name":"example_word_counter_reducer.py"
+  "reducer_file_name":"example_word_counter_reducer.py",
+  "memory_limit_total":"",
+  "memory_limit_per_process":""
 }

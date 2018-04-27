@@ -9,17 +9,23 @@ from Worker import Worker
 
 
 
+
 class MapReduceManeger:
+
+    def read_config(self, config_filename):
+        try:
+            with open(config_filename) as cfg:
+                self.config_dict =  json.loads(cfg.read())
+        except FileExistsError:
+            print("config file reading from {} problem".format(config_filename))
 
 
     def __init__(self, config_filename="config.json"):
         print("hello from MasteNode1")
 
-        try:
-            with open(config_filename) as cfg:
-                self.config =  json.loads(cfg.read())
-        except FileExistsError:
-            print("config file reading from {} problem".format(config_filename))
+        self.read_config(config_filename)
+
+
 
         self.task_types = Task.supported_types
         print ("Task types", self.task_types)
@@ -79,7 +85,7 @@ class MapReduceManeger:
     def read_confing(self):
         #todo check if config is ok values
         #todo check if configured functions have needed interface before spawning workers
-        #todo mode for csv.files
+        #todo mode for csv.files ==> Data manager
         pass
 
 

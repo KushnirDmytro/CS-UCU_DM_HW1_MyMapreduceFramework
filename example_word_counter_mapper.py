@@ -35,8 +35,6 @@ print ("data_File ", data_file)
 out_file_name = sys.argv[2]
 print ("out_file_name ", out_file_name)
 
-# print ("HELLO SUBPROC ={}=!!".format(worker_name))
-
 
 resulting_list_of_tuples = map(filename=data_file)
 
