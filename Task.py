@@ -11,20 +11,20 @@ class Task:
     proces_status = ["active", "error", "idle", "finished"]
 
 
-    def __init__(self, task_type, name, executable_dir, input_file, output_file):
-        self.name=name
-        self.type = task_type
-        self.executable=executable_dir
-        self.read_from=input_file
-        self.write_to=output_file
-        self.status="idle"
-        self.data = [] #todo
+    def __init__(self, task_config_dict):
+        self.ID= task_config_dict ['ID']
+        self.task_type = task_config_dict ['task_type']
+        self.executable = task_config_dict ['executable_dir']
+        self.read_from = task_config_dict ['input_file']
+        self.write_to = task_config_dict ['output_file']
+        self.status = "idle" #task_config_dict ['']
+
 
         #todo ceckers and exceptions!
-        if (self.type not in self.supported_types):
+        if (self.task_type not in self.supported_types):
             print (ValueError)
 
-        print("hello from new %s task /%s/ " % (task_type , name))
+        print("hello from new %s task /%s/ " % (self.task_type , self.ID))
 
     def is_idle(self):
         return self.status == 'idle'

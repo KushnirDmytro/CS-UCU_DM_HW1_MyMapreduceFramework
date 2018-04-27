@@ -6,11 +6,13 @@ from subprocess import Popen, PIPE
 #TODO would be great to implement "Star map-reduce" algorithm
 #TODO one more example for mapreduce
 
+#TODO requirements.txt !!!!
+
 #TODO deal with python errors (via tuttorial)
 
 #TODO file chunking for mapper task (or should it be separate, like resource manager....)
 
-from MapReduceManeger import MapReduceManeger
+from MapReduceManager import MapReduceManager
 
 help_msg = "This program demonstrates workflow of the mapreduce framework"
 if ('-h' in sys.argv or '--help' in sys.argv):
@@ -21,11 +23,11 @@ cmd = "example_word_counter_mapper.py data.txt worker_{}_"
 
 
 
-mas = MapReduceManeger()
+mas = MapReduceManager()
 
 empty_task_config = {
-    'type':'',
-    'name':'',
+    'task_type':'',
+    'ID':'',
     'executable_dir':'',
     'input_file':'' ,
     'output_file':''
@@ -38,20 +40,22 @@ empty_task_config = {
 
 
 mapper_task_config = {
-    'type':'map',
-    'name':'test1',
+    'task_type':'map',
+    'ID':'1',
     'executable_dir':'example_word_counter_mapper.py',
     'input_file':'data.txt' ,
     'output_file':'./mapping_result/map_{}_out.txt'
 }
 
 reducer_task_config = {
-    'type':'reduce',
-    'name':'test1',
+    'task_type':'reduce',
+    'ID':'1',
     'executable_dir':'example_word_counter_reducer.py',
     'input_file':'./mapping_result/map_test1_out.txt' ,
     'output_file':'./reduce_result/reduce_{}_out.txt'
 }
+
+#TODO now it is external, but must be automated and encapsulated in M-R_manager
 
 mas.add_task(task_config=mapper_task_config)
 

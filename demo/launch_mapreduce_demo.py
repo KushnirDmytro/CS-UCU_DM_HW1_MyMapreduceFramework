@@ -5,7 +5,7 @@ import time
 from subprocess import Popen, PIPE
 import json
 
-from MapReduceManeger import MapReduceManeger
+from MapReduceManager import MapReduceManager
 
 
 help_msg = "Advisable form of launch python3.6 launch_mapreduce_demo.py <config_filename>"

@@ -62,7 +62,7 @@ class Worker:
                  "-u",
                  self.task.executable,
                  self.task.read_from,
-                 self.task.write_to.format(self.task.name)],
+                 self.task.write_to.format(self.task.ID)],
                 # stdout=PIPE,
                 bufsize=1)
             process.communicate()

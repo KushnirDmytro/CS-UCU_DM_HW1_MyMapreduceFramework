@@ -10,7 +10,7 @@ from Worker import Worker
 
 
 
-class MapReduceManeger:
+class MapReduceManager:
 
     def read_config(self, config_filename):
         try:
@@ -31,7 +31,6 @@ class MapReduceManeger:
         print ("Task types", self.task_types)
 
 
-        #todo storage for different tasks types
         self.workers = {}
         self.tasks = {}
         for task_type in self.task_types:
@@ -39,20 +38,15 @@ class MapReduceManeger:
             self.tasks[task_type] = []
 
         self.help_msg = "" #<== TODO <maybe clean
-        self.data = []
 
 
 
 
 
     def add_task(self, task_config):
-        new_task = Task(task_type= task_config['type'],
-                        name = task_config['name'],
-                        executable_dir = task_config['executable_dir'],
-                        input_file = task_config['input_file'],
-                        output_file = task_config['output_file']
-                        )
-        self.tasks[new_task.type].append(new_task)
+        new_task = Task(task_config)
+
+        self.tasks[new_task.task_type].append(new_task)
 
 
     def run(self):
@@ -93,7 +87,7 @@ class MapReduceManeger:
         new_worker = Worker("Jimm")
         try:
             new_worker.set_task(task)
-            self.workers[task.type].append(new_worker)
+            self.workers[task.task_type].append(new_worker)
             return new_worker
 
         except:
