@@ -39,6 +39,8 @@ class MapReduceManager:
 
         self.help_msg = "" #<== TODO <maybe clean
 
+        self.last_worker_created_ID = 0
+        self.last_task_created_ID = 0
 
 
 

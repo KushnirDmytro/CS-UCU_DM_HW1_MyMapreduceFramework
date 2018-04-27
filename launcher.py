@@ -42,7 +42,7 @@ empty_task_config = {
 mapper_task_config = {
     'task_type':'map',
     'ID':'1',
-    'executable_dir':'example_word_counter_mapper.py',
+    'executable_dir':'example_word_counter_mapper',
     'input_file':'data.txt' ,
     'output_file':'./mapping_result/map_{}_out.txt'
 }
@@ -50,7 +50,7 @@ mapper_task_config = {
 reducer_task_config = {
     'task_type':'reduce',
     'ID':'1',
-    'executable_dir':'example_word_counter_reducer.py',
+    'executable_dir':'example_word_counter_reducer',
     'input_file':'./mapping_result/map_test1_out.txt' ,
     'output_file':'./reduce_result/reduce_{}_out.txt'
 }
