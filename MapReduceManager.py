@@ -63,7 +63,7 @@ class MapReduceManager:
                     except Exception:
                         new_worker.set_status('error')
                         new_worker.status = 'error'
-                        print ("worker failed")
+                        print ("worker failed") #TODO nice error msg logic
 
 
 

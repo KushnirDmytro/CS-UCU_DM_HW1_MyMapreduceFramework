@@ -26,18 +26,13 @@ def map(input_string_proxy, result):
     print (data[:200])
 
 
+    local_list = []
 
-    # list_of_tuples = []
-
-    i = 0
-    j = 0
     for word in data:
-        i+=1
-        if i % 10000 == 0:
-            j+=1
-            print (j*i)
-            i=0
-        result.append((word, 1))
+        local_list.append((word, '1'))
+
+    # using this because direct writing into proxy list is sooooooo slow...
+    result.extend(local_list)
 
     end = time.perf_counter()
 

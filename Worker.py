@@ -85,15 +85,16 @@ class Worker:
 
 
             resource_maneger = multiprocessing.Manager()
-            data_from_file_holder = resource_maneger.Value(ctypes.c_char_p, "")
+            data_proxy = resource_maneger.Value(ctypes.c_char_p, "")
 
+            #TODO customise reading (monitor the case of raw txt input) IDEA!!! use csv to save tuples!!!
 
-            pr = multiprocessing.Process(target=self.data_manager.read_file, args=(self.task.read_from,data_from_file_holder,))
+            pr = multiprocessing.Process(target=self.data_manager.read_file, args=(self.task.read_from,data_proxy,))
             pr.start()
             pr.join()
 
             print("stop")
-            print (len(data_from_file_holder.value))
+            print (len(data_proxy.value))
 
             #TODO reuse same process in whole line (or concatenate pipeline and pass it to one)
 
@@ -107,7 +108,7 @@ else:
     pass
             """
 
-            mapping_holder = resource_maneger.list()
+            result_tuple_list_proxy = resource_maneger.list()
 
 
             print(self.task.executable)
@@ -118,21 +119,33 @@ else:
 
             #TODO check types of a task to seek appropriate methods
 
-            executable = multiprocessing.Process(target=executable_module.map, args=(data_from_file_holder,mapping_holder))
+            callable_method_name = self.task.task_type
 
-            executable.start()
-            executable.join()
+            if  hasattr(executable_module, callable_method_name):
+                function_to_call = getattr(executable_module, callable_method_name)
+                executable = multiprocessing.Process(target=function_to_call,
+                                                     args=(data_proxy, result_tuple_list_proxy))
 
-            print (len(mapping_holder) )
+                executable.start()
+                executable.join()
+            else:
+
+                AttributeError("used executable {} has no appropriate method {} ".format(self.task.executable, callable_method_name) )
+
+            print ('mapping elements returned :', str( len(result_tuple_list_proxy) ) )
 
             output_filename = self.task.write_to.format(self.task.ID)
 
+            print("wrinting to ", output_filename)
+
             writer_process =  multiprocessing.Process(target=self.data_manager.write_file, args=( output_filename,
-                                                                                                  mapping_holder))
+                                                                                                  result_tuple_list_proxy))
 
             writer_process.start()
             writer_process.join()
 
+
+            print("wrinting to ", output_filename, " DONE")
 
 
 

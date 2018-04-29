@@ -45,8 +45,19 @@ class DataManager:
         """
         try:
             with open(out_file_name, 'w') as myfile:
-                for tuple in resulting_list_of_tuples:
-                    myfile.write("%s : %d \n" % (tuple[0], tuple[1]))
+
+                i=1
+
+                local_thread_buffer = resulting_list_of_tuples._getvalue() # for reading from proxy object speedup
+
+
+
+                for tuple in local_thread_buffer:
+                    if i == 1:
+                        print(tuple)
+                    myfile.write("%s : %s \n" % (tuple[0], tuple[1] ))
+                    i+=1
+
         except FileExistsError:
             print('file {} problem'.format(out_file_name))
         pass
