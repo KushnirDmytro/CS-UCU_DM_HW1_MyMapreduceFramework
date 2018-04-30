@@ -15,8 +15,8 @@ class Task:
         self.ID= task_config_dict ['ID']
         self.task_type = task_config_dict ['task_type']
         self.executable = task_config_dict ['executable_dir']
-        self.read_from = task_config_dict ['input_file']
-        self.write_to = task_config_dict ['output_file']
+        self.read_from = task_config_dict ['input_files']
+        self.write_to = task_config_dict ['output_files']
         self.status = "idle" #task_config_dict ['']
 
 

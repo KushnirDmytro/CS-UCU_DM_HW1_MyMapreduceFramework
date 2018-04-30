@@ -3,7 +3,7 @@
   "active_reducers_up_to":1,
   "active_combiners_up_to":1,
   "total_workers_number":1,
-  "data_source":"data.txt",
+  "data_sources":["data.txt"],
   "mapper_file_name": "example_word_counter_mapper.py",
   "reducer_file_name":"example_word_counter_reducer.py",
   "memory_limit_total":"",

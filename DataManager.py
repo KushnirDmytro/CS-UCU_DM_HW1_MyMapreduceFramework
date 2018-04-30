@@ -27,15 +27,33 @@ class DataManager:
     def write_csv(self, filename):
         pass
 
-    def read_file(self, filename, read_to):
-        print("READING")
-        with open(filename, 'rt') as myfile:
+    def read_file(self, filename, read_to, diapasone=()):
+        """
+        reading policy used: read up to diapasone end + 1 line, then this line will be skipped in the next chunk
+        """
+        print("READING from {} ".format(filename))
 
-            # data = [line for line in myfile]
-            read_to.value = myfile.read()
-            print("Been read " + str(len(read_to.value)))
-        # todo read in diapasone
-        pass
+
+        with open(filename, 'rt') as myfile:
+            if diapasone == ():
+                #reading whole file
+                read_to.value = myfile.read()
+                print("Been read " + str(len(read_to.value)))
+            else:
+                start_pos, end_pos = diapasone
+                myfile.seek(start_pos)
+                myfile.readline() #skipping to the endline position
+                real_start_pos = myfile.tell()
+
+                myfile.seek(end_pos)
+                myfile.readline()
+                real_end_pos = myfile.tell()
+                # optimisation to avoid long strings creation and concatenetion
+                read_to.value = myfile.read(real_end_pos-real_start_pos)
+
+                #TODO check diapason availability (file size)
+                pass
+                #TODO read this part of file
 
 
     def write_file(self, out_file_name,  resulting_list_of_tuples ):

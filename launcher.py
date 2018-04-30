@@ -29,8 +29,8 @@ empty_task_config = {
     'task_type':'',
     'ID':'',
     'executable_dir':'',
-    'input_file':'' ,
-    'output_file':''
+    'input_files':'' ,
+    'output_files':''
 }
 
 # test = './mapping_result/map_test1_out.txt'
@@ -39,25 +39,40 @@ empty_task_config = {
 
 
 
-mapper_task_config = {
+mapper_task1_config = {
     'task_type':'map',
     'ID':'1',
     'executable_dir':'example_word_counter_mapper',
-    'input_file':'data.txt' ,
-    'output_file':'./mapping_result/map_{}_out.txt'
+    'input_files':['data.txt'] ,
+    'output_files':['./mapping_result/map_{}_out.txt'],
+    'brothers':2
+}
+
+mapper_task2_config = {
+    'task_type':'map',
+    'ID':'2',
+    'executable_dir':'example_word_counter_mapper',
+    'input_files':['data.txt'] ,
+    'output_files':['./mapping_result/map_{}_out.txt'],
+    'brothers':2
 }
 
 reducer_task_config = {
     'task_type':'reduce',
     'ID':'1',
     'executable_dir':'example_word_counter_reducer',
-    'input_file':'./mapping_result/map_1_out.txt' ,
-    'output_file':'./reduce_result/reduce_{}_out.txt'
+    'input_files':['./mapping_result/map_1_out.txt'] ,
+    'output_files':['./reduce_result/reduce_{}_out_new.txt'],
+    'brothers':1
 }
 
 #TODO now it is external, but must be automated and encapsulated in M-R_manager
 
-mas.add_task(task_config=mapper_task_config)
+mas.add_task(task_config=mapper_task1_config)
+
+mas.run()
+
+mas.add_task(task_config=mapper_task2_config)
 
 mas.run()
 

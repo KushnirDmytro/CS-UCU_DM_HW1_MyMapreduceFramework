@@ -77,14 +77,20 @@ class Worker:
 
             self.set_status('waiting_resource')
             self.task.status = 'active'
+
+
+
             data_source = self.task.read_from
+
+
+
 
             resource_maneger = multiprocessing.Manager()
             data_proxy = resource_maneger.Value(ctypes.c_char_p, "")
 
             # TODO customise reading (monitor the case of raw txt input) IDEA!!! use csv to save tuples!!!
 
-            pr = multiprocessing.Process(target=self.data_manager.read_file, args=(data_source, data_proxy,))
+            pr = multiprocessing.Process(target=self.data_manager.read_file, args=(data_source[0], data_proxy,))
             pr.start()
             pr.join()
 
