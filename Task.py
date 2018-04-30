@@ -1,6 +1,6 @@
 # Class responsible for computing task and date representation
 
-
+import importlib
 task_config = {
 #todo
 }
@@ -33,9 +33,16 @@ class Task:
         if status in self.proces_status:
             self.status = status
         else:
-            pass
-            #todo ValueError
+            raise ValueError("No such value [{}] among possible states".format(status))
 
-    def get_executable_function(self, type, executable_dir):
-        #todo check if file has appropriate interface function
-        pass
+
+    def get_executable_function(self):
+
+        executable_module = importlib.import_module(self.executable)
+        callable_method_name = self.task_type
+        if not hasattr(executable_module, callable_method_name):
+            raise AttributeError("used executable {} has no appropriate method {} ".format(self.executable,
+                                                                                         callable_method_name))
+        else:
+            function_to_call = getattr(executable_module, callable_method_name)
+            return function_to_call
