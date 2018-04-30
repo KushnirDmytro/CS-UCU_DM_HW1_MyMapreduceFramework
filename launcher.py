@@ -39,24 +39,6 @@ empty_task_config = {
 
 
 
-mapper_task1_config = {
-    'task_type':'map',
-    'ID':'1',
-    'executable_dir':'example_word_counter_mapper',
-    'input_files':['data.txt'] ,
-    'output_files':['./mapping_result/map_{}_out.txt'],
-    'brothers':2
-}
-
-mapper_task2_config = {
-    'task_type':'map',
-    'ID':'2',
-    'executable_dir':'example_word_counter_mapper',
-    'input_files':['data.txt'] ,
-    'output_files':['./mapping_result/map_{}_out.txt'],
-    'brothers':2
-}
-
 reducer_task_config = {
     'task_type':'reduce',
     'ID':'1',
@@ -68,11 +50,16 @@ reducer_task_config = {
 
 #TODO now it is external, but must be automated and encapsulated in M-R_manager
 
-mas.add_task(task_config=mapper_task1_config)
+mappers_configs = mas.create_mappers_configs()
+print(mappers_configs)
+
+
+
+mas.add_task(task_config=mappers_configs[0])
 
 mas.run()
 
-mas.add_task(task_config=mapper_task2_config)
+mas.add_task(task_config=mappers_configs[1])
 
 mas.run()
 

@@ -5,6 +5,7 @@ import os
 import json
 from Task import Task
 from Worker import Worker
+from DataManager import DataManager
 
 
 
@@ -14,19 +15,6 @@ class MapReduceManager:
     """
     We don't need special storage for ready data, because they are output directory names for each finished task
     """
-
-    def read_config(self, config_filename):
-        # todo check if config is ok values
-        # todo mode for csv.files ==> Data manager
-        try:
-            with open(config_filename) as cfg:
-                self.config_dict =  json.loads(cfg.read())
-        except FileExistsError:
-            print("config file reading from {} problem".format(config_filename))
-
-
-    def create_tasks_pipeline(self):
-        pass
 
 
     def __init__(self, config_filename="config.json"):
@@ -49,13 +37,117 @@ class MapReduceManager:
         self.last_worker_created_ID = 0
         self.last_task_created_ID = 0
 
+        self.data_manager = DataManager("1") #as ID
+
+
+    def read_config(self, config_filename):
+        # todo check if config is ok values
+        # todo mode for csv.files ==> Data manager
+        try:
+            with open(config_filename) as cfg:
+                self.config_dict =  json.loads(cfg.read())
+        except FileExistsError:
+            print("config file reading from {} problem".format(config_filename))
+
+    # mapper_task1_config = {
+    #     'task_type': 'map',
+    #     'ID': '1',
+    #     'executable_dir': 'example_word_counter_mapper',
+    #     'input_files': ['data.txt'],
+    #     'output_files': ['./mapping_result/map_{}_out.txt'],
+    #     'readind_diapasones_list':[()]
+    # }
+    #
+    # {
+    #     "active_mappers_up_to": 2,
+    #     "active_reducers_up_to": 1,
+    #     "active_combiners_up_to": 0,
+    #     "active_shufflers_up_to": 0,
+    #     "total_workers_number": 3,
+    #     "data_sources": ["data.txt"],
+    #     "mapper_file_name": "example_word_counter_mapper.py",
+    #     "reducer_file_name": "example_word_counter_reducer.py",
+    #     "memory_limit_total": "",
+    #     "memory_limit_per_process": ""
+    # }
+
+    def make_diapasones(self, files_list, consumers_n):
+
+        input_splits_list_example = [{
+            "files":["d1", 'd2'],
+            "partitions":[(1,1), (2,1) ]
+        }]
+
+        input_splits_list = []
+        files_n = len(files_list)
+        if consumers_n > files_n :
+            consumers_at_least = consumers_n // files_n #at_most = at_least+1
+            files_with_additional_consumer = consumers_n % files_n
+            files_without_aditional_consumer = files_n - files_with_additional_consumer
+
+            overall_conusmer_id = 0
+
+            for file_indx in range(files_n):
+                file_name = files_list[file_indx]
+                this_file_consumers = consumers_at_least
+                if file_indx + 1 > files_without_aditional_consumer:
+                    this_file_consumers += 1
+                for this_file_consumer_indx in range(this_file_consumers):
+                    input_splits_list.append(
+                        {
+                            "files": [ file_name ],
+                            "partitions":[ (this_file_consumers, this_file_consumer_indx+1) ]
+                        }
+                        # use natural numbers indexation to avoid (0,0) case
+                    )
+                    overall_conusmer_id+=1
+
+        else: #more files then  consumers
+            #in this case we'll use file-by-file processing approach (reading from quiue) instead of indexing
+            pass #TODO refactor it out
+
+        return input_splits_list
+
+
+    def create_task_config(self, type, id, input_config, out_template):
+        config =  {
+                    "task_type": type,
+                    'ID': str(id),
+                    'executable_dir': 'example_word_counter_mapper',
+                    'input_src':input_config,
+                    'output_files_template': out_template
+                }
+        return config
+
+    def create_mappers_configs(self):
+
+        mappers = self.config_dict['active_mappers_up_to']
+        mappers_task_list = []
+
+        diapasones_list  = self.make_diapasones (self.config_dict['data_sources'], mappers)
+
+        task_id = 0
+        for diapasone in diapasones_list:
+            mappers_task_list.append  (
+                self.create_task_config (type='map',
+                                         id = task_id,
+                                         input_config=diapasone,
+                                         out_template=self.config_dict['write_templates']['map'])
+            )
+            task_id+=1
+
+        return mappers_task_list
+
+
+
+
 
 
 
     def add_task(self, task_config):
         new_task = Task(task_config)
 
-        self.tasks[new_task.task_type].append(new_task)
+        self.tasks[new_task.config.task_type].append(new_task)
 
 
 
@@ -68,10 +160,10 @@ class MapReduceManager:
                     try:
                         task.set_status('active')
                         new_worker.execute()
-                    except Exception:
+                    except :
                         new_worker.set_status('error')
                         new_worker.status = 'error'
-                        print ("worker failed") #TODO nice error msg logic
+                        Exception("worker failed") #TODO nice error msg logic
 
 
 
@@ -88,15 +180,16 @@ class MapReduceManager:
 
 
     def spawn_worker(self, task, args=None):
-        new_worker = Worker("Jimm")
+        new_worker = Worker("worker_{}".format( self.last_worker_created_ID ), self.data_manager )
+        self.last_worker_created_ID+=1
         try:
             new_worker.set_task(task)
-            self.workers[task.task_type].append(new_worker)
+            self.workers[task.config.task_type].append(new_worker)
             return new_worker
 
         except Exception:
             new_worker.set_status('error')
-            print()
+            print("spawning worker error")
 
 
 

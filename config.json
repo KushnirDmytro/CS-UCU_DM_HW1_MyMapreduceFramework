@@ -7,5 +7,11 @@
   "mapper_file_name": "example_word_counter_mapper.py",
   "reducer_file_name":"example_word_counter_reducer.py",
   "memory_limit_total":"",
-  "memory_limit_per_process":""
+  "memory_limit_per_process":"",
+  "write_templates":{
+    "map":"./mapping_result/map_{}_out.txt",
+    "reduce":"./mapping_result/reduce_{}_out.txt",
+    "combine":"./mapping_result/combine_{}_out.txt",
+    "shuffle":"./mapping_result/shuffle_{}_out.txt"
+  }
 }
