@@ -31,7 +31,8 @@ class MapReduceManager:
         self.read_config(config_filename)
 
         self.task_types = Task.supported_types
-        print ("Task types", self.task_types)
+        print ("Available Task types", self.task_types)
+
 
         self.workers = {}
         self.tasks = {}
@@ -132,7 +133,6 @@ class MapReduceManager:
         return config
 
     def create_mappers_configs(self):
-
         mappers = self.config_dict['active_mappers_up_to']
         mappers_task_list = []
 
@@ -153,20 +153,26 @@ class MapReduceManager:
 
 
 
-    def add_task(self, task_config):
+    def register_task_from_config(self, task_config):
         new_task = Task(task_config)
         self.tasks[new_task.config.task_type].append(new_task)
 
 
-
-    def build_template (self, type, flag="out", input=0, output=0, file_ext='txt'):
+    def build_template_for_output_data_file (self, type, input=0, output=0, file_ext='txt'):
+        """
+        :return: template that needs to instert id and flag of resulting process
+        """
         id_place_template = "{}"
+        flag_place_template = "{}"
+
         pref = ""
         if (type == 'map'):
             pref = "./mapping_result/"
         if (type == 'reduce'):
             pref = "./reduce_result/"
-        return (pref + "{}_{}_{}_{}_{}.{}".format(type, flag, id_place_template, input, output, file_ext ))
+        return (pref + "{}_{}_{}_{}_{}.{}".format(type, flag_place_template, id_place_template, input, output, file_ext ))
+
+
 
     def run(self):
         for task_type in self.tasks: #TODO do available resource check instead (in adition to)
@@ -194,12 +200,12 @@ class MapReduceManager:
                             "files":[src_file],
                             "partitions" : [(1,1)]
                         },
-                    out_template=self.build_template(type=task_type)
+                    out_template=self.build_template_for_output_data_file(type=task_type)
                 )
 
                 self.last_worker_created_ID +=1
 
-                self.add_task(new_task_config)
+                self.register_task_from_config(new_task_config)
 
 
 
@@ -212,7 +218,8 @@ class MapReduceManager:
                     except :
                         new_worker.set_status('error')
                         new_worker.status = 'error'
-                        Exception("worker failed") #TODO nice error msg logic
+                        Exception("WORKER ERROR  worker type:[{}] id:[{}] creation failed"
+                                  .format(task_type, self.last_worker_created_ID-1))
 
 
 

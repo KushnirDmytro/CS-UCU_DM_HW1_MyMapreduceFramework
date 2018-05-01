@@ -20,16 +20,12 @@ class Worker:
         self.status = "idle"
         self.process = None
         self.data_manager = dataManager
-        # self.executable_module = None
         self.function_to_call = None
         self.pipeline = pipelineDict
-        self.define_pipeline()
 
 
         print ("Hello from worker {} status {} task {}".format(self.ID, self.status, self.task))
 
-    def define_pipeline(self):
-        pass
 
     # def read_from(self, filename, diapasone = None):
     #     """
@@ -143,7 +139,8 @@ class Worker:
                 self.set_status('waiting_resource')
                 self.task.status = 'active'
 
-                output_filename = self.task.config.output_files_template.format(self.task.config.ID)
+                output_flag = "out"
+                output_filename = self.task.config.output_files_template.format(output_flag, self.task.config.ID)
 
                 print("wrinting to ", output_filename)
 

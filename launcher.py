@@ -19,9 +19,7 @@ if ('-h' in sys.argv or '--help' in sys.argv):
     print (help_msg)
 
 
-cmd = "example_word_counter_mapper.py data.txt worker_{}_"
-
-
+# cmd = "example_word_counter_mapper.py data.txt worker_{}_"
 
 mas = MapReduceManager()
 
@@ -33,20 +31,7 @@ empty_task_config = {
     'output_files':''
 }
 
-# test = './mapping_result/map_test1_out.txt'
-# with open(test, 'w') as myfile:
-#     myfile.write("test")
 
-
-
-reducer_task_config = {
-    'task_type':'reduce',
-    'ID':'1',
-    'executable_dir':'example_word_counter_reducer',
-    'input_files':['./mapping_result/map_1_out.txt'] ,
-    'output_files':['./reduce_result/reduce_{}_out_new.txt'],
-    'brothers':1
-}
 
 #TODO now it is external, but must be automated and encapsulated in M-R_manager
 
@@ -54,12 +39,10 @@ mappers_configs = mas.create_mappers_configs()
 print(mappers_configs)
 
 
-
-mas.add_task(task_config=mappers_configs[0])
+mas.register_task_from_config(task_config=mappers_configs[0])
+mas.register_task_from_config(task_config=mappers_configs[1])
 
 mas.run()
-
-mas.add_task(task_config=mappers_configs[1])
 
 mas.run()
 
