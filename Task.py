@@ -9,7 +9,7 @@ task_config = {
 class Task:
 
     supported_types = ["map",  "combine", "shuffle", "reduce"]
-    proces_status = ["active", "error", "idle", "finished"]
+    proces_status = ["active", "waiting_resource", "error", "idle", "finished"]
 
     class Resources:
         def __init__(self, resources): #TODO refactor this and default (1,1) partitioning

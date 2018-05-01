@@ -17,9 +17,9 @@ class Worker:
     def __init__(self, ID, dataManager, pipelineDict):
         self.ID=ID
         self.task = None
-        self.status = "idle"
         self.process = None
         self.data_manager = dataManager
+        self.status = dataManager.shared_data_manager.Value(ctypes.c_char_p, "idle") #TODO rename to Proxy
         self.function_to_call = None
         self.pipeline = pipelineDict
 
@@ -44,7 +44,7 @@ class Worker:
 
     def set_status(self, status):
         if status in self.worker_status:
-            self.status = status
+            self.status.value = status
         else:
             raise ValueError(" [{}] is unsupported status value for worker {}".format(status, self.ID))
 
@@ -58,13 +58,6 @@ class Worker:
         except Exception:
             print("Task initialisation conflict from Worker {}".format(self.ID))
 
-    # config = {
-    #     "task_type": type,
-    #     'ID': str(id),
-    #     'executable_dir': 'example_word_counter_mapper',
-    #     'input_src': input_config,
-    #     'output_files_template': out_template
-    # }
 
     def execute(self):
         """
@@ -73,12 +66,20 @@ class Worker:
         """
         try:
 
+            #Prepare sync
+
+
+
+
             #Aquire data
 
             #TODO make iterationd over src list and launch this worker for all of them
+            self.task.set_status('active')
+
+
 
             self.set_status('waiting_resource')
-            self.task.status = 'active'
+
 
 
             this_task_type = self.task.config.task_type
@@ -97,10 +98,7 @@ class Worker:
 
             input_string_proxy = resource_maneger.Value(ctypes.c_char_p, "")
 
-            # TODO customise reading (monitor the case of raw txt input)
-
             reader_function = self.data_manager.read_input_files
-
 
             pr = multiprocessing.Process(target=reader_function,
                                          args=(input_files, input_partitions , input_string_proxy,))
@@ -117,7 +115,7 @@ class Worker:
             #launch task
 
             self.set_status('active')
-            self.task.status = 'active' #todo setter!
+
 
             result_tuple_list_proxy = resource_maneger.list()
 
@@ -142,11 +140,9 @@ class Worker:
             #write result
 
             self.set_status('waiting_resource')
-            self.task.status = 'active'
+
 
             output_flag = "out"
-            #TODO configure to support writing to multiple directories
-            #TODO template_filling_only_here
 
 
             number_of_output_files = 1
@@ -188,6 +184,8 @@ class Worker:
             result_tuple_list_proxy = None
 
             self.set_status('finished')
+
+
             self.task.status = 'finished'
             #########
 
