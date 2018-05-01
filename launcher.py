@@ -48,7 +48,7 @@ mas.run()
 
 # mas.add_task(task_config=reducer_task_config)
 
-mas.run()
+# mas.run()
 
 #TODO GLOBAL!!!
 # TODO make that subprocess got kind of pipeline to execute -> reader, mapper, writer

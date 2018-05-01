@@ -14,10 +14,12 @@ class DataManager:
         self.shared_data_manager = multiprocessing.Manager()
         self.master_config  = master_config_dict #to isolate but access info is easy
         self.available_data_monitor  = self.shared_data_manager.dict()
-        self.available_data_monitor["map"] = []
-        self.available_data_monitor["reduce"] = []
-        self.available_data_monitor["combine"] = []
-        self.available_data_monitor["shuffle"] = []
+        self.available_data_monitor["map"] = self.shared_data_manager.list()
+        self.available_data_monitor["reduce"] = self.shared_data_manager.list()
+        self.available_data_monitor["combine"] = self.shared_data_manager.list()
+        self.available_data_monitor["shuffle"] = self.shared_data_manager.list()
+        self.available_data_monitor["finish"] = self.shared_data_manager.list()
+
 
 
 

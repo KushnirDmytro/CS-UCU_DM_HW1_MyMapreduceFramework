@@ -6,7 +6,7 @@ import time
 
 def shuffle (input_string_proxy, result_list, consumers_number):
 
-    print ("reduce process started")
+    print ("shuffling process started")
     start = time.perf_counter()
 
 

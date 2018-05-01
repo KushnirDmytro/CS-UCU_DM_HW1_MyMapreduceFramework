@@ -59,6 +59,94 @@ class Worker:
             print("Task initialisation conflict from Worker {}".format(self.ID))
 
 
+    def subprocess_execution(self,
+                             this_task_type,
+                             reader_fun, reader_args,
+                             job_fun, job_args,
+                             writer_fun, tamplater,
+                             worker_state_proxy,
+                             data_monitor
+                             ):
+
+        # TODO make iterationd over src list and launch this worker for all of them
+        # self.task.set_status('active')
+
+        worker_state_proxy.value = 'waiting_resource'
+
+        input_string_proxy = ""
+        reader_fun (reader_args, input_string_proxy)
+
+
+        print("DATA AQUIRED:")
+        print(len(input_string_proxy) )
+
+        ##########
+
+        # launch task
+
+        worker_state_proxy.value = 'active'
+
+        retur_list = []
+        if this_task_type == 'shuffle':  # TODO yes, I know it is bad, but arcitecture is my weak spot
+            job_args = (input_string_proxy, retur_list,
+                         int(self.data_manager.master_config['active_reducers_up_to']))
+
+        job_fun(job_args, retur_list)
+
+        # executable = multiprocessing.Process(target=self.function_to_call,
+        #                                      args=task_args)
+
+        # executable.start()
+        # executable.join()
+
+        print('mapping elements returned :', str(len(retur_list)))
+        #########
+
+
+
+
+        output_flag = "out"
+
+        number_of_output_files = 1
+        if (retur_list[0][0] == 'output_files'):
+            number_of_output_files = retur_list[0][1]
+            retur_list = retur_list[1:]
+
+        for output_file_index in range(number_of_output_files):  # different outputs to different files
+
+            output_filename = tamplater(
+                type=this_task_type, flag=output_flag, id=self.ID, input=0, output=output_file_index, file_ext='txt'
+            )
+
+            print("wrinting to ", output_filename)
+
+            writer_args = (output_filename, retur_list[output_file_index])
+
+            writer_fun(writer_args)
+
+            print("wrinting to ", output_filename, " DONE")
+
+            print("WAS data_available")
+            print(data_monitor)
+
+            data_monitor += [output_filename]  # adding to available data new resource
+
+            print("NOW data_available")
+            print(data_monitor)
+
+        #########
+
+        # release data
+        result_tuple_list_proxy = None
+
+        worker_state_proxy.value = 'finished'
+
+        # self.task.status = 'finished'
+
+
+
+        pass
+
     def execute(self):
         """
         designed for possibility of configurable evaluating flow
@@ -67,41 +155,42 @@ class Worker:
         try:
 
             #Prepare sync
+            this_task_type = self.task.config.task_type
+            next_step_task = self.pipeline[this_task_type]
 
+            input_data_source = self.task.config.input_src
 
+            print(input_data_source)
 
+            input_files = input_data_source.files
+            input_partitions = input_data_source.partitions
+
+            data_monitor = self.data_manager.available_data_monitor[next_step_task]
+            resource_maneger = self.data_manager.shared_data_manager
+
+            input_string_proxy = resource_maneger.Value(ctypes.c_char_p, "")
+
+            reader_function = self.data_manager.read_input_files
+            reader_args = (input_files, input_partitions, input_string_proxy,)
+
+            result_tuple_list_proxy = resource_maneger.list()
+
+            task_args = (input_string_proxy, result_tuple_list_proxy)
+
+            writer_fn = self.data_manager.write_file
+
+            tamplater = self.data_manager.build_template_for_output_data_file
 
             #Aquire data
 
             #TODO make iterationd over src list and launch this worker for all of them
             self.task.set_status('active')
 
-
-
             self.set_status('waiting_resource')
 
 
-
-            this_task_type = self.task.config.task_type
-            next_step_task = self.pipeline[this_task_type]
-
-            input_data_source = self.task.config.input_src
-
-            print (input_data_source)
-
-            input_files = input_data_source.files
-            input_partitions = input_data_source.partitions
-
-            data_monitor = self.data_manager.available_data_monitor
-            resource_maneger = self.data_manager.shared_data_manager
-
-
-            input_string_proxy = resource_maneger.Value(ctypes.c_char_p, "")
-
-            reader_function = self.data_manager.read_input_files
-
             pr = multiprocessing.Process(target=reader_function,
-                                         args=(input_files, input_partitions , input_string_proxy,))
+                                         args=reader_args)
 
             pr.start()
             pr.join()
@@ -117,9 +206,7 @@ class Worker:
             self.set_status('active')
 
 
-            result_tuple_list_proxy = resource_maneger.list()
 
-            task_args = (input_string_proxy, result_tuple_list_proxy)
 
             if this_task_type == 'shuffle': #TODO yes, I know it is bad, but arcitecture is my weak spot
                 task_args = (input_string_proxy, result_tuple_list_proxy,
@@ -152,15 +239,18 @@ class Worker:
 
             for output_file_index in range ( number_of_output_files ):#different outputs to different files
 
-                output_filename = self.data_manager.build_template_for_output_data_file (
+                output_filename = tamplater (
                     type = this_task_type, flag=output_flag, id=self.ID, input=0, output=output_file_index, file_ext='txt'
                 )
 
                 print("wrinting to ", output_filename)
 
+
+                writer_args = (output_filename,result_tuple_list_proxy[output_file_index])
+
                 writer_process = multiprocessing.Process(
-                    target=self.data_manager.write_file,
-                    args=(output_filename,result_tuple_list_proxy[output_file_index])
+                    target=writer_fn,
+                    args=writer_args
                 )
 
                 writer_process.start()
@@ -171,12 +261,12 @@ class Worker:
 
 
                 print("WAS data_available[{}]".format(next_step_task) )
-                print(data_monitor[next_step_task])
+                print(data_monitor)
 
-                data_monitor[next_step_task] += [output_filename] #adding to available data new resource
+                data_monitor += [output_filename] #adding to available data new resource
 
                 print("NOW data_available[{}]".format(next_step_task))
-                print (data_monitor[next_step_task])
+                print (data_monitor)
 
             #########
 

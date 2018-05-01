@@ -193,13 +193,12 @@ class MapReduceManager:
                     src_file = self.data_manager.available_data_monitor[task_type][:2]
                     #TODO problem, it gives list
 
-                    self.data_manager.available_data_monitor[task_type] = \
-                        self.data_manager.available_data_monitor[task_type][2:]
+                    self.data_manager.available_data_monitor[task_type].pop()
+                    self.data_manager.available_data_monitor[task_type].pop()
                 else:
                     src_file = [self.data_manager.available_data_monitor[task_type][0]]
 
-                    self.data_manager.available_data_monitor[task_type] = \
-                        self.data_manager.available_data_monitor[task_type][1:]
+                    self.data_manager.available_data_monitor[task_type].pop()
                 # .pop() is not working for proxy
 
 

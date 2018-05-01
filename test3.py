@@ -76,3 +76,21 @@ print (hashed)
 
 d = {}
 
+def b(a):
+    a.append(0)
+
+c = []
+b (c)
+print(c)
+
+
+
+dct = man.dict()
+dct ["a"] = man.list()
+
+
+ptr = dct["a"]
+ptr.extend([1,2])
+dct["a"].pop()
+print(type(dct["a"]))
+print(dct['a'])
