@@ -8,7 +8,7 @@ task_config = {
 
 class Task:
 
-    supported_types = ["map", "reduce", "combine", "shuffle"]
+    supported_types = ["map",  "combine", "shuffle", "reduce"]
     proces_status = ["active", "error", "idle", "finished"]
 
     class Resources:
@@ -50,7 +50,16 @@ class Task:
     def get_executable_function(self):
 
         executable_module = importlib.import_module(self.config.executable_dir)
-        callable_method_name = self.config.task_type
+
+        task_type = self.config.task_type
+
+        if task_type == 'map' or task_type == 'reduce':
+            callable_method_name = self.config.task_type
+        if task_type == 'shuffle':
+            pass #TODO do separate function shuffler
+        if task_type == 'combine':
+            callable_method_name = 'reduce'
+
         if not hasattr(executable_module, callable_method_name):
             raise AttributeError("used executable {} has no appropriate method {} ".format(self.config.executable_dir,
                                                                                          callable_method_name))

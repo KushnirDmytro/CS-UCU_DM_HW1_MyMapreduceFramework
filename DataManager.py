@@ -70,25 +70,30 @@ class DataManager:
 
 
 
-    def read_file(self, filename, partitioning, read_to ):
+    def read_input_files(self, input_files, input_partitions, read_to):
         """
         reading policy used: read up to diapasone end + 1 line, then this line will be skipped in the next chunk
         """
-        print("READING from {} ".format(filename))
+        obtained_stings_list = []
+        for input_file, input_file_partition in zip(input_files, input_partitions):
 
-        if partitioning == (1,1):
-            #reading whole file
-            with open(filename, 'rt') as myfile:
-                read_to.value = myfile.read()
-                print("Been read " + str(len(read_to.value)))
+            print("READING from {} ".format(input_file))
 
-        else:
-            start_pos, end_pos = self.get_file_diapasone (filename, partitioning)
-            with open(filename, 'rt') as myfile:
-                # optimisation to avoid long strings creation and concatenetion
-                myfile.seek(start_pos)
-                read_to.value = myfile.read(end_pos-start_pos)
+            if input_file_partition == (1,1):
+                #reading whole file
+                with open(input_file, 'rt') as myfile:
+                    obtained_stings_list.append(myfile.read())
+                    print("Been read " + str(len(obtained_stings_list[len(obtained_stings_list)-1])))
 
+            else:
+                start_pos, end_pos = self.get_file_diapasone (input_file, input_file_partition)
+                with open(input_file, 'rt') as myfile:
+                    # optimisation to avoid long strings creation and concatenetion
+                    myfile.seek(start_pos)
+                    obtained_stings_list.append(myfile.read(end_pos-start_pos))
+                    # read_to.value += '\n' + myfile.read(end_pos-start_pos)
+
+        read_to.value = os.linesep.join(obtained_stings_list)
 
 
 

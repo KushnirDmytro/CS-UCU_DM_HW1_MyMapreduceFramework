@@ -159,7 +159,8 @@ class MapReduceManager:
                 self.build_task_config (type='map',
                                         id = task_id,
                                         input_config=diapasone,
-                                        out_template=self.config_dict['write_templates']['map'])
+                                        out_template=self.build_template_for_output_data_file('map')
+                                        )
             )
             task_id+=1
 
@@ -185,6 +186,11 @@ class MapReduceManager:
             pref = "./mapping_result/"
         if (type == 'reduce'):
             pref = "./reduce_result/"
+        if (type == 'shuffle'):
+            pref = "./shuffle_result/"
+        if (type == 'combine'):
+            pref = "./combine_result/"
+
         return (pref + "{}_{}_{}_{}_{}.{}".format(type, flag_place_template, id_place_template, input, output, file_ext ))
 
 
@@ -202,9 +208,17 @@ class MapReduceManager:
             if (available_data > 0):
 
 
-                src_file = self.data_manager.available_data_monitor[task_type][0]
-                self.data_manager.available_data_monitor[task_type] = \
-                    self.data_manager.available_data_monitor[task_type][1:]
+                #TODO combine several files to one if possible
+                if (available_data > 1) and task_type == 'reduce': #taking two tasks to merge them
+                    src_file = self.data_manager.available_data_monitor[task_type][:2]
+
+                    self.data_manager.available_data_monitor[task_type] = \
+                        self.data_manager.available_data_monitor[task_type][2:]
+                else:
+                    src_file = self.data_manager.available_data_monitor[task_type][0]
+
+                    self.data_manager.available_data_monitor[task_type] = \
+                        self.data_manager.available_data_monitor[task_type][1:]
                 # .pop() is not working for proxy
 
 

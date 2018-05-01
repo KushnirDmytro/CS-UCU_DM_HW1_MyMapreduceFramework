@@ -1,20 +1,15 @@
 {
   "active_mappers_up_to": 2,
   "active_reducers_up_to":1,
-  "use_combiners":"False",
+  "use_combiners":"True",
 
   "total_workers_number":1,
   "data_sources":["data.txt"],
   "executables":{
     "map": "example_word_counter_mapper",
-    "reduce":"example_word_counter_reducer"
+    "reduce":"example_word_counter_reducer",
+    "combine": "example_word_counter_reducer"
   },
   "memory_limit_total":"",
-  "memory_limit_per_process":"",
-  "write_templates":{
-    "map":"./mapping_result/map_{}_out.txt",
-    "reduce":"./mapping_result/reduce_{}_out.txt",
-    "combine":"./mapping_result/combine_{}_out.txt",
-    "shuffle":"./mapping_result/shuffle_{}_out.txt"
-  }
+  "memory_limit_per_process":""
 }

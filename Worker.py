@@ -90,86 +90,82 @@ class Worker:
             data_monitor = self.data_manager.available_data_monitor
             resource_maneger = self.data_manager.shared_data_manager
 
-            for input_file, input_file_partition in zip (input_files, input_partitions):
+
+            input_string_proxy = resource_maneger.Value(ctypes.c_char_p, "")
+
+            # TODO customise reading (monitor the case of raw txt input)
+
+            reader_function = self.data_manager.read_input_files
 
 
+            pr = multiprocessing.Process(target=reader_function,
+                                         args=(input_files, input_partitions , input_string_proxy,))
+
+            pr.start()
+            pr.join()
+
+            print("DATA AQUIRED:")
+            print(len(input_string_proxy.value))
+
+            ##########
 
 
-                input_data_proxy = resource_maneger.Value(ctypes.c_char_p, "")
+            #launch task
 
-                # TODO customise reading (monitor the case of raw txt input) IDEA!!! use csv to save tuples!!!
+            self.set_status('active')
+            self.task.status = 'active' #todo setter!
 
-                reader_function = self.data_manager.read_file
-
-
-                pr = multiprocessing.Process(target=reader_function,
-                                             args=(input_file, input_file_partition , input_data_proxy,))
-
-                pr.start()
-                pr.join()
-
-                print("DATA AQUIRED:")
-                print(len(input_data_proxy.value))
-
-                ##########
+            result_tuple_list_proxy = resource_maneger.list()
 
 
-                #launch task
+            executable = multiprocessing.Process(target=self.function_to_call,
+                                                 args=(input_string_proxy, result_tuple_list_proxy))
 
-                self.set_status('active')
-                self.task.status = 'active' #todo setter!
+            executable.start()
+            executable.join()
 
-                result_tuple_list_proxy = resource_maneger.list()
+            print('mapping elements returned :', str(len(result_tuple_list_proxy)))
+            #########
 
+            #clear memory
+            input_string_proxy = None
 
-                executable = multiprocessing.Process(target=self.function_to_call,
-                                                     args=(input_data_proxy, result_tuple_list_proxy))
+            #write result
 
-                executable.start()
-                executable.join()
+            self.set_status('waiting_resource')
+            self.task.status = 'active'
 
-                print('mapping elements returned :', str(len(result_tuple_list_proxy)))
-                #########
+            output_flag = "out"
+            output_filename = self.task.config.output_files_template.format(output_flag, self.task.config.ID)
 
-                #clear memory
-                input_data_proxy = None
+            print("wrinting to ", output_filename)
 
-                #write result
+            writer_process = multiprocessing.Process(target=self.data_manager.write_file, args=(output_filename,
+                                                                                                result_tuple_list_proxy))
+            writer_process.start()
+            writer_process.join()
 
-                self.set_status('waiting_resource')
-                self.task.status = 'active'
+            print("wrinting to ", output_filename, " DONE")
 
-                output_flag = "out"
-                output_filename = self.task.config.output_files_template.format(output_flag, self.task.config.ID)
+            this_task_type = self.task.config.task_type
+            next_step_task = self.pipeline[this_task_type]
 
-                print("wrinting to ", output_filename)
+            print("WAS data_available[{}]".format(next_step_task) )
+            print(data_monitor[next_step_task])
 
-                writer_process = multiprocessing.Process(target=self.data_manager.write_file, args=(output_filename,
-                                                                                                    result_tuple_list_proxy))
-                writer_process.start()
-                writer_process.join()
+            data_monitor[next_step_task] += [output_filename] #adding to available data new resource
 
-                print("wrinting to ", output_filename, " DONE")
+            print("NOW data_available[{}]".format(next_step_task))
+            print (data_monitor[next_step_task])
 
-                this_task_type = self.task.config.task_type
-                next_step_task = self.pipeline[this_task_type]
+            #########
 
-                print("WAS data_available[{}]".format(next_step_task) )
-                print(data_monitor[next_step_task])
+            #release data
+            result_tuple_list_proxy = None
 
-                data_monitor[next_step_task] += [output_filename] #adding to available data new resource
-
-                print("NOW data_available[{}]".format(next_step_task))
-                print (data_monitor[next_step_task])
-
-                #########
-
-                #release data
-                result_tuple_list_proxy = None
-
-                self.set_status('finished')
-                self.task.status = 'finished'
-                #########
+            self.set_status('finished')
+            self.task.status = 'finished'
+            #########
 
 
             #TODO reuse same process in whole line (or concatenate pipeline and pass it to one)
@@ -202,7 +198,6 @@ class Worker:
 
 
 
-cmd = "example_word_counter_mapper.py data.txt worker_{}_"
 
 
 #
