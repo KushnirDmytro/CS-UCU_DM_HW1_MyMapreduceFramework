@@ -144,8 +144,6 @@ class Worker:
 
                 print("wrinting to ", output_filename)
 
-                #TODO config outfile multiindexing name {type}_{flag}_{input}_{output}.{ext}
-
                 writer_process = multiprocessing.Process(target=self.data_manager.write_file, args=(output_filename,
                                                                                                     result_tuple_list_proxy))
                 writer_process.start()
@@ -175,11 +173,6 @@ class Worker:
 
 
             #TODO reuse same process in whole line (or concatenate pipeline and pass it to one)
-
-
-
-
-
 
 
             # process = subprocess.Process(

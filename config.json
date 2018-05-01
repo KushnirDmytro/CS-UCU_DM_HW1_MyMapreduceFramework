@@ -1,7 +1,8 @@
 {
   "active_mappers_up_to": 2,
   "active_reducers_up_to":1,
-  "active_combiners_up_to":1,
+  "use_combiners":"False",
+
   "total_workers_number":1,
   "data_sources":["data.txt"],
   "executables":{

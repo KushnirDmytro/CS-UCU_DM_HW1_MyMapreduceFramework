@@ -20,10 +20,25 @@ class MapReduceManager:
         """
         According to configured mode creates scenario of processing data (which steps to use)
         """
-        return {
-            "map":"reduce",
-            "reduce":"finish"
-        }
+        pipeline = {"reduce":"finish"}
+        if self.config_dict['use_combiners'] == "True":
+            pipeline['map'] = 'combine'
+            if self.config_dict['active_reducers_up_to'] > 1:
+                pipeline['combine'] = 'shuffle'
+                pipeline['shuffle'] = 'reduce'
+            else:
+                pipeline['combine'] = 'reduce'
+
+        else:
+            if self.config_dict['active_reducers_up_to'] > 1:
+                pipeline['map'] = 'shuffle'
+                pipeline['shuffle'] = 'reduce'
+
+            else:
+                pipeline['map'] = 'reduce'
+        return pipeline
+
+
 
     def __init__(self, config_filename="config.json"):
         print("hello from MasteNode1")
@@ -153,7 +168,7 @@ class MapReduceManager:
 
 
 
-    def register_task_from_config(self, task_config):
+    def spawn_task_from_config(self, task_config):
         new_task = Task(task_config)
         self.tasks[new_task.config.task_type].append(new_task)
 
@@ -175,7 +190,7 @@ class MapReduceManager:
 
 
     def run(self):
-        for task_type in self.tasks: #TODO do available resource check instead (in adition to)
+        for task_type in self.tasks:
 
             print("cheking {}".format(task_type))
 
@@ -204,8 +219,7 @@ class MapReduceManager:
                 )
 
                 self.last_worker_created_ID +=1
-
-                self.register_task_from_config(new_task_config)
+                self.spawn_task_from_config(new_task_config)
 
 
 
