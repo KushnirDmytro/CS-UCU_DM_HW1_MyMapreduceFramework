@@ -16,6 +16,14 @@ class MapReduceManager:
     We don't need special storage for ready data, because they are output directory names for each finished task
     """
 
+    def craete_task_pipeline_scenario(self):
+        """
+        According to configured mode creates scenario of processing data (which steps to use)
+        """
+        return {
+            "map":"reduce",
+            "reduce":"finish"
+        }
 
     def __init__(self, config_filename="config.json"):
         print("hello from MasteNode1")
@@ -38,6 +46,8 @@ class MapReduceManager:
         self.last_task_created_ID = 0
 
         self.data_manager = DataManager("1") #as ID
+        self.pipeline_dict = self.craete_task_pipeline_scenario()
+
 
 
     def read_config(self, config_filename):
@@ -48,6 +58,8 @@ class MapReduceManager:
                 self.config_dict =  json.loads(cfg.read())
         except FileExistsError:
             print("config file reading from {} problem".format(config_filename))
+
+
 
     # mapper_task1_config = {
     #     'task_type': 'map',
@@ -71,12 +83,12 @@ class MapReduceManager:
     #     "memory_limit_per_process": ""
     # }
 
-    def make_diapasones(self, files_list, consumers_n):
+    def make_reading_diapasones(self, files_list, consumers_n):
 
-        input_splits_list_example = [{
-            "files":["d1", 'd2'],
-            "partitions":[(1,1), (2,1) ]
-        }]
+        # input_splits_list_example = [{
+        #     "files":["d1", 'd2'],
+        #     "partitions":[(1,1), (2,1) ]
+        # }]
 
         input_splits_list = []
         files_n = len(files_list)
@@ -104,16 +116,16 @@ class MapReduceManager:
 
         else: #more files then  consumers
             #in this case we'll use file-by-file processing approach (reading from quiue) instead of indexing
-            pass #TODO refactor it out
+            pass #TODO refactor it out (I've planned bigger function instead)
 
         return input_splits_list
 
 
-    def create_task_config(self, type, id, input_config, out_template):
+    def build_task_config(self, type, id, input_config, out_template):
         config =  {
                     "task_type": type,
                     'ID': str(id),
-                    'executable_dir': 'example_word_counter_mapper',
+                    'executable_dir': self.config_dict['executables'][type],
                     'input_src':input_config,
                     'output_files_template': out_template
                 }
@@ -124,15 +136,15 @@ class MapReduceManager:
         mappers = self.config_dict['active_mappers_up_to']
         mappers_task_list = []
 
-        diapasones_list  = self.make_diapasones (self.config_dict['data_sources'], mappers)
+        diapasones_list  = self.make_reading_diapasones (self.config_dict['data_sources'], mappers)
 
         task_id = 0
         for diapasone in diapasones_list:
             mappers_task_list.append  (
-                self.create_task_config (type='map',
-                                         id = task_id,
-                                         input_config=diapasone,
-                                         out_template=self.config_dict['write_templates']['map'])
+                self.build_task_config (type='map',
+                                        id = task_id,
+                                        input_config=diapasone,
+                                        out_template=self.config_dict['write_templates']['map'])
             )
             task_id+=1
 
@@ -141,22 +153,59 @@ class MapReduceManager:
 
 
 
-
-
-
     def add_task(self, task_config):
         new_task = Task(task_config)
-
         self.tasks[new_task.config.task_type].append(new_task)
 
 
 
+    def build_template (self, type, flag="out", input=0, output=0, file_ext='txt'):
+        id_place_template = "{}"
+        pref = ""
+        if (type == 'map'):
+            pref = "./mapping_result/"
+        if (type == 'reduce'):
+            pref = "./reduce_result/"
+        return (pref + "{}_{}_{}_{}_{}.{}".format(type, flag, id_place_template, input, output, file_ext ))
+
     def run(self):
-        for task_type in self.tasks:
+        for task_type in self.tasks: #TODO do available resource check instead (in adition to)
+
             print("cheking {}".format(task_type))
+
+            available_data = len (self.data_manager.available_data_monitor[task_type])
+            print('available [{}] data chunks for [{}] task'.format(available_data, task_type))
+
+
+            #TODO check if it is lock safe
+            if (available_data > 0):
+
+
+                src_file = self.data_manager.available_data_monitor[task_type][0]
+                self.data_manager.available_data_monitor[task_type] = \
+                    self.data_manager.available_data_monitor[task_type][1:]
+                # .pop() is not working for proxy
+
+
+                new_task_config = self.build_task_config(
+                    type=task_type,
+                    id=self.last_worker_created_ID,
+                    input_config={
+                            "files":[src_file],
+                            "partitions" : [(1,1)]
+                        },
+                    out_template=self.build_template(type=task_type)
+                )
+
+                self.last_worker_created_ID +=1
+
+                self.add_task(new_task_config)
+
+
+
             for task in self.tasks[task_type]:
                 if task.is_idle():
-                    new_worker = self.spawn_worker(task)
+                    new_worker = self.spawn_worker(task) #TODO here we can reuse old worker from pool of available now
                     try:
                         task.set_status('active')
                         new_worker.execute()
@@ -172,15 +221,8 @@ class MapReduceManager:
     # def send_task(self):
 
 
-
-
-    def print_help(self):
-        pass
-
-
-
     def spawn_worker(self, task, args=None):
-        new_worker = Worker("worker_{}".format( self.last_worker_created_ID ), self.data_manager )
+        new_worker = Worker("worker_{}".format( self.last_worker_created_ID ), self.data_manager , self.pipeline_dict)
         self.last_worker_created_ID+=1
         try:
             new_worker.set_task(task)
@@ -192,6 +234,9 @@ class MapReduceManager:
             print("spawning worker error")
 
 
+
+    def print_help(self):
+        pass
 
 
     def ping_worker(self):

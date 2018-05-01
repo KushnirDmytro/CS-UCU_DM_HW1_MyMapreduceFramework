@@ -8,11 +8,11 @@ task_config = {
 
 class Task:
 
-    supported_types = ["map", "reduce", "combine", "suffle"]
+    supported_types = ["map", "reduce", "combine", "shuffle"]
     proces_status = ["active", "error", "idle", "finished"]
 
     class Resources:
-        def __init__(self, resources):
+        def __init__(self, resources): #TODO refactor this and default (1,1) partitioning
             self.files = resources["files"]
             self.partitions = resources["partitions"]
 

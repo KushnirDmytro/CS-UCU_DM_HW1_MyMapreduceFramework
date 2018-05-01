@@ -14,8 +14,10 @@ class DataManager:
         self.shared_data_manager = multiprocessing.Manager()
 
         self.available_data_monitor  = self.shared_data_manager.dict()
-        self.available_data_monitor["raw"] = 0
-        self.available_data_monitor["map"] = 0
+        self.available_data_monitor["map"] = []
+        self.available_data_monitor["reduce"] = []
+        self.available_data_monitor["combine"] = []
+        self.available_data_monitor["shuffle"] = []
 
 
 

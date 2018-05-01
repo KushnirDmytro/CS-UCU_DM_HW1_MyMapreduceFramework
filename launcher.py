@@ -63,7 +63,7 @@ mas.add_task(task_config=mappers_configs[1])
 
 mas.run()
 
-mas.add_task(task_config=reducer_task_config)
+# mas.add_task(task_config=reducer_task_config)
 
 mas.run()
 

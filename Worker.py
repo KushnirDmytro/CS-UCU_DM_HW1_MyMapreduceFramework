@@ -14,7 +14,7 @@ class Worker:
 
     worker_status = ['active', 'waiting_resource', 'idle', 'error', 'dead', 'finished' ]
 
-    def __init__(self, ID, dataManager):
+    def __init__(self, ID, dataManager, pipelineDict):
         self.ID=ID
         self.task = None
         self.status = "idle"
@@ -22,10 +22,14 @@ class Worker:
         self.data_manager = dataManager
         # self.executable_module = None
         self.function_to_call = None
+        self.pipeline = pipelineDict
+        self.define_pipeline()
+
 
         print ("Hello from worker {} status {} task {}".format(self.ID, self.status, self.task))
 
-
+    def define_pipeline(self):
+        pass
 
     # def read_from(self, filename, diapasone = None):
     #     """
@@ -152,13 +156,16 @@ class Worker:
 
                 print("wrinting to ", output_filename, " DONE")
 
-                print("WAS")
-                print(data_monitor["map"])
+                this_task_type = self.task.config.task_type
+                next_step_task = self.pipeline[this_task_type]
 
-                data_monitor["map"] += 1
+                print("WAS data_available[{}]".format(next_step_task) )
+                print(data_monitor[next_step_task])
 
-                print ("now")
-                print (data_monitor["map"])
+                data_monitor[next_step_task] += [output_filename] #adding to available data new resource
+
+                print("NOW data_available[{}]".format(next_step_task))
+                print (data_monitor[next_step_task])
 
                 #########
 

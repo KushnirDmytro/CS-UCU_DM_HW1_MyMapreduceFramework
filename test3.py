@@ -1,4 +1,4 @@
-# import multiprocessing
+import multiprocessing
 # import ctypes
 # import importlib
 #
@@ -17,27 +17,33 @@
 #
 #
 #
-# def a(ar):
-#     lst = []
-#     lst.append(2)
-#     ar = lst.copy()
-#     # ar.append(1)
-#     # print (ar.value)
-#
-# man = multiprocessing.Manager()
-#
-# str = man.list()
-#
-# str.append('a')
-#
-# pr = multiprocessing.Process(target=a, args=(str,))
-#
-# pr.start()
-# pr.join()
-#
-# print(str)
-#
-# # print(cstring)
+def a(ar):
+    lst = []
+
+    popped = ar['a'].pop()
+    ar['a'] = ar['a'][:-1]
+     # = buf
+    # lst = ar['a'][:-1]
+    # print (lst)
+    # print (popped)
+    # ar = lst.copy()
+    # ar.append(1)
+    # print (ar.value)
+
+man = multiprocessing.Manager()
+
+str = man.dict()
+
+str["a"] = ['a', 2]
+
+pr = multiprocessing.Process(target=a, args=(str,))
+
+pr.start()
+pr.join()
+
+print(str)
+
+# print(cstring)
 
 filename = 'data_txt'
 
