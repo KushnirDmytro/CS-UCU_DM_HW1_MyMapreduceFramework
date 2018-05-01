@@ -61,7 +61,7 @@ class MapReduceManager:
         self.last_worker_created_ID = 0
         self.last_task_created_ID = 0
 
-        self.data_manager = DataManager("1") #as ID
+        self.data_manager = DataManager("1", self.config_dict) #as ID
         self.pipeline_dict = self.craete_task_pipeline_scenario()
 
 
@@ -137,13 +137,12 @@ class MapReduceManager:
         return input_splits_list
 
 
-    def build_task_config(self, type, id, input_config, out_template):
+    def build_task_config(self, type, id, input_config):
         config =  {
                     "task_type": type,
                     'ID': str(id),
                     'executable_dir': self.config_dict['executables'][type],
-                    'input_src':input_config,
-                    'output_files_template': out_template
+                    'input_src':input_config
                 }
         return config
 
@@ -159,7 +158,6 @@ class MapReduceManager:
                 self.build_task_config (type='map',
                                         id = task_id,
                                         input_config=diapasone,
-                                        out_template=self.build_template_for_output_data_file('map')
                                         )
             )
             task_id+=1
@@ -174,24 +172,6 @@ class MapReduceManager:
         self.tasks[new_task.config.task_type].append(new_task)
 
 
-    def build_template_for_output_data_file (self, type, input=0, output=0, file_ext='txt'):
-        """
-        :return: template that needs to instert id and flag of resulting process
-        """
-        id_place_template = "{}"
-        flag_place_template = "{}"
-
-        pref = ""
-        if (type == 'map'):
-            pref = "./mapping_result/"
-        if (type == 'reduce'):
-            pref = "./reduce_result/"
-        if (type == 'shuffle'):
-            pref = "./shuffle_result/"
-        if (type == 'combine'):
-            pref = "./combine_result/"
-
-        return (pref + "{}_{}_{}_{}_{}.{}".format(type, flag_place_template, id_place_template, input, output, file_ext ))
 
 
 
@@ -211,11 +191,12 @@ class MapReduceManager:
                 #TODO combine several files to one if possible
                 if (available_data > 1) and task_type == 'reduce': #taking two tasks to merge them
                     src_file = self.data_manager.available_data_monitor[task_type][:2]
+                    #TODO problem, it gives list
 
                     self.data_manager.available_data_monitor[task_type] = \
                         self.data_manager.available_data_monitor[task_type][2:]
                 else:
-                    src_file = self.data_manager.available_data_monitor[task_type][0]
+                    src_file = [self.data_manager.available_data_monitor[task_type][0]]
 
                     self.data_manager.available_data_monitor[task_type] = \
                         self.data_manager.available_data_monitor[task_type][1:]
@@ -226,13 +207,12 @@ class MapReduceManager:
                     type=task_type,
                     id=self.last_worker_created_ID,
                     input_config={
-                            "files":[src_file],
+                            "files":src_file,
                             "partitions" : [(1,1)]
                         },
-                    out_template=self.build_template_for_output_data_file(type=task_type)
                 )
 
-                self.last_worker_created_ID +=1
+                self.last_task_created_ID +=1
                 self.spawn_task_from_config(new_task_config)
 
 
@@ -264,7 +244,7 @@ class MapReduceManager:
             self.workers[task.config.task_type].append(new_worker)
             return new_worker
 
-        except Exception:
+        except Exception: #todo looks like it misses some cases
             new_worker.set_status('error')
             print("spawning worker error")
 

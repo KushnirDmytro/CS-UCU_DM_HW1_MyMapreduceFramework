@@ -24,7 +24,7 @@ class Worker:
         self.pipeline = pipelineDict
 
 
-        print ("Hello from worker {} status {} task {}".format(self.ID, self.status, self.task))
+        print ("Hello from worker [{}] status [{}] task [{}]".format(self.ID, self.status, self.task))
 
 
     # def read_from(self, filename, diapasone = None):
@@ -80,6 +80,10 @@ class Worker:
             self.set_status('waiting_resource')
             self.task.status = 'active'
 
+
+            this_task_type = self.task.config.task_type
+            next_step_task = self.pipeline[this_task_type]
+
             input_data_source = self.task.config.input_src
 
             print (input_data_source)
@@ -117,9 +121,14 @@ class Worker:
 
             result_tuple_list_proxy = resource_maneger.list()
 
+            task_args = (input_string_proxy, result_tuple_list_proxy)
+
+            if this_task_type == 'shuffle': #TODO yes, I know it is bad, but arcitecture is my weak spot
+                task_args = (input_string_proxy, result_tuple_list_proxy,
+                             int(self.data_manager.master_config['active_reducers_up_to']))
 
             executable = multiprocessing.Process(target=self.function_to_call,
-                                                 args=(input_string_proxy, result_tuple_list_proxy))
+                                                 args=task_args)
 
             executable.start()
             executable.join()
@@ -136,27 +145,42 @@ class Worker:
             self.task.status = 'active'
 
             output_flag = "out"
-            output_filename = self.task.config.output_files_template.format(output_flag, self.task.config.ID)
+            #TODO configure to support writing to multiple directories
+            #TODO template_filling_only_here
 
-            print("wrinting to ", output_filename)
 
-            writer_process = multiprocessing.Process(target=self.data_manager.write_file, args=(output_filename,
-                                                                                                result_tuple_list_proxy))
-            writer_process.start()
-            writer_process.join()
+            number_of_output_files = 1
+            if (result_tuple_list_proxy[0][0] == 'output_files'):
+                number_of_output_files = result_tuple_list_proxy[0][1]
+                result_tuple_list_proxy = result_tuple_list_proxy[1:]
 
-            print("wrinting to ", output_filename, " DONE")
+            for output_file_index in range ( number_of_output_files ):#different outputs to different files
 
-            this_task_type = self.task.config.task_type
-            next_step_task = self.pipeline[this_task_type]
+                output_filename = self.data_manager.build_template_for_output_data_file (
+                    type = this_task_type, flag=output_flag, id=self.ID, input=0, output=output_file_index, file_ext='txt'
+                )
 
-            print("WAS data_available[{}]".format(next_step_task) )
-            print(data_monitor[next_step_task])
+                print("wrinting to ", output_filename)
 
-            data_monitor[next_step_task] += [output_filename] #adding to available data new resource
+                writer_process = multiprocessing.Process(
+                    target=self.data_manager.write_file,
+                    args=(output_filename,result_tuple_list_proxy[output_file_index])
+                )
 
-            print("NOW data_available[{}]".format(next_step_task))
-            print (data_monitor[next_step_task])
+                writer_process.start()
+                writer_process.join()
+
+                print("wrinting to ", output_filename, " DONE")
+
+
+
+                print("WAS data_available[{}]".format(next_step_task) )
+                print(data_monitor[next_step_task])
+
+                data_monitor[next_step_task] += [output_filename] #adding to available data new resource
+
+                print("NOW data_available[{}]".format(next_step_task))
+                print (data_monitor[next_step_task])
 
             #########
 

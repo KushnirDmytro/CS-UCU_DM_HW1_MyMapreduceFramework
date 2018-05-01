@@ -21,7 +21,7 @@ def map(input_string_proxy, result):
         local_list.append((word, '1'))
 
     # using this because direct writing into proxy list is sooooooo slow...
-    result.extend(local_list)
+    result.extend([local_list])
 
     end = time.perf_counter()
     print ("wordscounter: ", end - start)

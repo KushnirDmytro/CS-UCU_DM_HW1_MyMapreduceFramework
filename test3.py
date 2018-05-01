@@ -20,7 +20,8 @@ testName = "example_word_counter_mapper"
 def a(str):
     # lst = []
     #
-    str.value += os.linesep + "world!"
+    # str.value += os.linesep + "world!"
+    str.append(1)
     #
     # popped = ar['a'].pop()
     # ar['a'] = ar['a'][:-1]
@@ -38,13 +39,16 @@ man = multiprocessing.Manager()
 
 cstring = man.Value(ctypes.c_char_p, "Hello, ")
 
-pr = multiprocessing.Process(target=a, args=(cstring,))
+prox_list = man.list()
+
+# pr = multiprocessing.Process(target=a, args=(cstring,))
+pr = multiprocessing.Process(target=a, args=(prox_list,))
 
 pr.start()
 pr.join()
 
 
-print (cstring.value)
+print (prox_list)
 
 # str["a"] = ['a', 2]
 
@@ -63,3 +67,12 @@ print(str)
 
 a =  [1,2,3,4]
 print (a[:2])
+
+b = 'test'
+
+hashed = hash(b) % 3
+
+print (hashed)
+
+d = {}
+

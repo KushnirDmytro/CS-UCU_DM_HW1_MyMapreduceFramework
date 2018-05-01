@@ -22,7 +22,6 @@ class Task:
             self.ID = task_config_dict['ID']
             self.executable_dir = task_config_dict['executable_dir']
             self.input_src = Task.Resources(task_config_dict['input_src'])
-            self.output_files_template = task_config_dict['output_files_template']
 
 
     def __init__(self, task_config_dict):
@@ -35,7 +34,7 @@ class Task:
         if (self.config.task_type not in self.supported_types):
             print (ValueError)
 
-        print("hello from new %s task /%s/ " % (self.config.task_type , self.config.ID))
+        print("hello from new [%s] task ID:[%s] " % (self.config.task_type , self.config.ID))
 
     def is_idle(self):
         return self.status == 'idle'
@@ -53,12 +52,11 @@ class Task:
 
         task_type = self.config.task_type
 
-        if task_type == 'map' or task_type == 'reduce':
-            callable_method_name = self.config.task_type
-        if task_type == 'shuffle':
-            pass #TODO do separate function shuffler
         if task_type == 'combine':
             callable_method_name = 'reduce'
+        else:
+            callable_method_name = self.config.task_type #they are similar strings
+
 
         if not hasattr(executable_module, callable_method_name):
             raise AttributeError("used executable {} has no appropriate method {} ".format(self.config.executable_dir,

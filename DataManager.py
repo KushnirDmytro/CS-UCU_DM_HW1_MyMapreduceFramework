@@ -8,11 +8,11 @@ class DataManager:
     """
 
 
-    def __init__(self, id):
+    def __init__(self, id, master_config_dict):
         self.id_ = id
         self.mem_aquired = None
         self.shared_data_manager = multiprocessing.Manager()
-
+        self.master_config  = master_config_dict #to isolate but access info is easy
         self.available_data_monitor  = self.shared_data_manager.dict()
         self.available_data_monitor["map"] = []
         self.available_data_monitor["reduce"] = []
@@ -39,6 +39,24 @@ class DataManager:
 
     def write_csv(self, filename):
         pass
+
+
+    def build_template_for_output_data_file (self, type, flag, id, input=0, output=0, file_ext='txt'):
+        """
+        :return: template that needs to instert id and flag of resulting process
+        """
+
+        pref = ""
+        if (type == 'map'):
+            pref = "./mapping_result/"
+        if (type == 'reduce'):
+            pref = "./reduce_result/"
+        if (type == 'shuffle'):
+            pref = "./shuffle_result/"
+        if (type == 'combine'):
+            pref = "./combine_result/"
+
+        return (pref + "{}_{}_{}_{}_{}.{}".format(type, id, flag, input, output, file_ext ))
 
 
     def get_file_diapasone (self, filename, partitioning):
@@ -75,6 +93,7 @@ class DataManager:
         reading policy used: read up to diapasone end + 1 line, then this line will be skipped in the next chunk
         """
         obtained_stings_list = []
+        print("READING from GENERAL {} ".format(input_files))
         for input_file, input_file_partition in zip(input_files, input_partitions):
 
             print("READING from {} ".format(input_file))
@@ -107,8 +126,7 @@ class DataManager:
 
                 i=1
 
-                local_thread_buffer = resulting_list_of_tuples._getvalue() # for reading from proxy object speedup
-
+                local_thread_buffer = resulting_list_of_tuples # for reading from proxy object speedup
 
                 for tuple in local_thread_buffer:
                     if i == 1:

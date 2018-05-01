@@ -1,6 +1,6 @@
 {
   "active_mappers_up_to": 2,
-  "active_reducers_up_to":1,
+  "active_reducers_up_to":2,
   "use_combiners":"True",
 
   "total_workers_number":1,
@@ -8,7 +8,8 @@
   "executables":{
     "map": "example_word_counter_mapper",
     "reduce":"example_word_counter_reducer",
-    "combine": "example_word_counter_reducer"
+    "combine": "example_word_counter_reducer",
+    "shuffle":"example_word_counter_shuffler"
   },
   "memory_limit_total":"",
   "memory_limit_per_process":""

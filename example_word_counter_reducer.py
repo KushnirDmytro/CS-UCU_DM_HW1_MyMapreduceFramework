@@ -25,7 +25,7 @@ def reduce (input_string_proxy, result_list):
 
     to_list = local_dict.items()
 
-    result_list.extend( to_list )
+    result_list.extend( [to_list] )
 
     end = time.perf_counter()
 
