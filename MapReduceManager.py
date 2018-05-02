@@ -186,6 +186,34 @@ class MapReduceManager:
                     founded_task = task
         return founded_task
 
+    def any_tasks_of_state(self, status):
+        founded_task = False
+
+        for task_type in self.tasks:
+            for task in self.tasks[task_type]:
+                if task.status.value == status:
+                    founded_task = True
+
+        return founded_task
+
+
+    def are_we_finished(self):
+        answer = True
+        if (not self.get_idle_task() is None ) or self.any_tasks_of_state('active') or self.any_tasks_of_state('waiting_resource'):
+            answer = False
+            have_finished = self.any_tasks_of_state('finished')
+            print ("Have finised tasks ? : [{}] ".format(have_finished) )
+        return answer
+
+    def print_tasks_state(self):
+        for task_type in self.tasks:
+            for task in self.tasks[task_type]:
+                print ("t [{}] st [{}]".format(task_type, task.status))
+
+    def print_resourses_state(self):
+        for data_class, value in self.data_manager.available_data_monitor.items()[:-1]: #avoiding key "finished"
+            for resourse in value:
+                print("FILE: [{}] res [{}]".format(data_class, resourse))
 
 
 
@@ -193,8 +221,17 @@ class MapReduceManager:
 
         while (True):
             with self.data_manager.resource_available_flag:
+
                 if (not self.data_manager.has_available_data() is None and (self.get_idle_task() is  None) ):
-                    self.data_manager.resource_available_flag.wait()
+                    if not self.are_we_finished():
+
+                        self.print_tasks_state()
+                        self.print_resourses_state()
+
+                        self.data_manager.resource_available_flag.wait()
+                    else:
+                        print ("Manager turn off")
+                        return
 
                 available_data, task_type = self.data_manager.get_available_task_and_data()
 
@@ -213,8 +250,6 @@ class MapReduceManager:
                     self.spawn_task_from_config(new_task_config)
 
 
-                # TODO data extraction
-                # TODO task registration here
 
                 else:
                     idle_task = self.get_idle_task()
@@ -234,61 +269,6 @@ class MapReduceManager:
 
 
 
-
-                #
-                #
-                #
-                # for task_type in self.tasks:
-                #
-                #     # print("cheking {}".format(task_type))
-                #
-                #     available_data = len (self.data_manager.available_data_monitor[task_type])
-                #
-                #
-                #
-                #     #TODO check if it is lock safe
-                #     if (available_data > 0):
-                #         print('available [{}] data chunks for [{}] task'.format(available_data, task_type))
-                #
-                #
-                #         src_file = [self.data_manager.available_data_monitor[task_type][0]]
-                #
-                #         self.data_manager.available_data_monitor[task_type].pop()
-                #
-                #
-                #
-                #         new_task_config = self.build_task_config(
-                #             type=task_type,
-                #             id=self.last_worker_created_ID,
-                #             input_config={
-                #                     "files":src_file,
-                #                     "partitions" : [(1,1)]
-                #                 },
-                #         )
-                #
-                #         self.last_task_created_ID +=1
-                #         self.spawn_task_from_config(new_task_config)
-                #
-                #
-                #
-                #     for task in self.tasks[task_type]:
-                #         if task.is_idle():
-                #             new_worker = self.spawn_worker(task) #TODO here we can reuse old worker from pool of available now
-                #             try:
-                #                 task.set_status('active')
-                #                 new_worker.execute()
-                #             except :
-                #                 new_worker.set_status('error')
-                #                 new_worker.status = 'error'
-                #                 Exception("WORKER ERROR  worker type:[{}] id:[{}] creation failed"
-                #                           .format(task_type, self.last_worker_created_ID-1))
-
-
-
-
-
-
-    # def send_task(self):
 
 
     def spawn_worker(self, task, args=None):

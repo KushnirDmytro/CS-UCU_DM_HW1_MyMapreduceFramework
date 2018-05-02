@@ -65,7 +65,7 @@ class Worker:
         #TODO add state of task modification
 
         worker_state_proxy.value = 'waiting_resource' #TODO out of subprocess
-
+        task_state_proxy.value = 'active'
 
         input_string_proxy = reader_fun (reader_args[0], reader_args[1] )
 
@@ -131,6 +131,7 @@ class Worker:
         result_tuple_list_proxy = None
 
         worker_state_proxy.value = 'finished'
+        task_state_proxy.value = 'finished'
         print()
         print("Forked finish")
         print()
