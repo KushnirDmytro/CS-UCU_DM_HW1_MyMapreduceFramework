@@ -94,3 +94,13 @@ ptr.extend([1,2])
 dct["a"].pop()
 print(type(dct["a"]))
 print(dct['a'])
+
+dct2 = man.dict()
+
+dct2['1'] = 1
+dct2['2'] = 2
+dct2['3'] = 3
+dct2['5'] = 4
+for el, val in dct2.items():
+    print (el)
+    print(val)

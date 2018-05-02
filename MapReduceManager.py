@@ -6,6 +6,7 @@ import json
 from Task import Task
 from Worker import Worker
 from DataManager import DataManager
+import multiprocessing
 
 
 
@@ -64,6 +65,8 @@ class MapReduceManager:
         self.data_manager = DataManager("1", self.config_dict) #as ID
         self.pipeline_dict = self.craete_task_pipeline_scenario()
 
+
+        #TODO add flag for 'time to die'
 
 
     def read_config(self, config_filename):
@@ -173,62 +176,70 @@ class MapReduceManager:
         new_task = Task(task_config)
         self.tasks[new_task.config.task_type].append(new_task)
 
+    def get_idle_task(self):
+        founded_task = None
+        for task_type in self.tasks:
+            for task in self.tasks[task_type]:
+                if task.is_idle():
+                    founded_task = task
+        return founded_task
 
 
 
 
     def run(self):
-        for task_type in self.tasks:
 
-            print("cheking {}".format(task_type))
-
-            available_data = len (self.data_manager.available_data_monitor[task_type])
-            print('available [{}] data chunks for [{}] task'.format(available_data, task_type))
-
-
-            #TODO check if it is lock safe
-            if (available_data > 0):
+        while (True):
+            with self.data_manager.resource_available_flag:
+                if (not self.data_manager.has_available_data() and (self.get_idle_task() is  None) ):
+                    self.data_manager.resource_available_flag.wait()
 
 
-                #TODO combine several files to one if possible
-                # if (available_data > 1) and task_type == 'reduce': #taking two tasks to merge them
-                #     src_file = self.data_manager.available_data_monitor[task_type][:2]
-                #
-                #
-                #     self.data_manager.available_data_monitor[task_type].pop()
-                #     self.data_manager.available_data_monitor[task_type].pop()
-                # else:
-                src_file = [self.data_manager.available_data_monitor[task_type][0]]
+                for task_type in self.tasks:
 
-                self.data_manager.available_data_monitor[task_type].pop()
-                # .pop() is not working for proxy
+                    # print("cheking {}".format(task_type))
 
-
-                new_task_config = self.build_task_config(
-                    type=task_type,
-                    id=self.last_worker_created_ID,
-                    input_config={
-                            "files":src_file,
-                            "partitions" : [(1,1)]
-                        },
-                )
-
-                self.last_task_created_ID +=1
-                self.spawn_task_from_config(new_task_config)
+                    available_data = len (self.data_manager.available_data_monitor[task_type])
 
 
 
-            for task in self.tasks[task_type]:
-                if task.is_idle():
-                    new_worker = self.spawn_worker(task) #TODO here we can reuse old worker from pool of available now
-                    try:
-                        task.set_status('active')
-                        new_worker.execute()
-                    except :
-                        new_worker.set_status('error')
-                        new_worker.status = 'error'
-                        Exception("WORKER ERROR  worker type:[{}] id:[{}] creation failed"
-                                  .format(task_type, self.last_worker_created_ID-1))
+                    #TODO check if it is lock safe
+                    if (available_data > 0):
+                        print('available [{}] data chunks for [{}] task'.format(available_data, task_type))
+
+
+                        src_file = [self.data_manager.available_data_monitor[task_type][0]]
+
+                        self.data_manager.available_data_monitor[task_type].pop()
+
+
+
+                        new_task_config = self.build_task_config(
+                            type=task_type,
+                            id=self.last_worker_created_ID,
+                            input_config={
+                                    "files":src_file,
+                                    "partitions" : [(1,1)]
+                                },
+                        )
+
+                        self.last_task_created_ID +=1
+                        self.spawn_task_from_config(new_task_config)
+
+
+
+                    for task in self.tasks[task_type]:
+                        if task.is_idle():
+                            new_worker = self.spawn_worker(task) #TODO here we can reuse old worker from pool of available now
+                            try:
+                                task.set_status('active')
+                                new_worker.execute()
+                            except :
+                                new_worker.set_status('error')
+                                new_worker.status = 'error'
+                                Exception("WORKER ERROR  worker type:[{}] id:[{}] creation failed"
+                                          .format(task_type, self.last_worker_created_ID-1))
+
 
 
 

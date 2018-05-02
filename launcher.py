@@ -40,11 +40,14 @@ print(mappers_configs)
 
 
 mas.spawn_task_from_config(task_config=mappers_configs[0])
+# mas.data_manager.available_data_monitor['map'].append()
 # mas.spawn_task_from_config(task_config=mappers_configs[1])
 
 mas.run()
 
 mas.run()
+
+# print("Launcher finished ==============================================")
 
 # mas.add_task(task_config=reducer_task_config)
 

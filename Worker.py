@@ -56,11 +56,12 @@ class Worker:
                              job_fun,
                              writer_fun, tamplater,
                              worker_state_proxy,
-                             data_monitor
+                             data_monitor,
+                             resource_available_flag
                              ):
 
 
-        worker_state_proxy.value = 'waiting_resource' #TODO out of subprocess
+        # worker_state_proxy.value = 'waiting_resource' #TODO out of subprocess
 
 
         input_string_proxy = reader_fun (reader_args[0], reader_args[1] )
@@ -73,7 +74,7 @@ class Worker:
 
         # launch task
 
-        worker_state_proxy.value = 'active'
+        # worker_state_proxy.value = 'active'
 
 
 
@@ -111,20 +112,24 @@ class Worker:
 
             print("wrinting to ", output_filename, " DONE")
 
-            print("WAS data_available")
-            print(data_monitor[next_task_type])
+            with resource_available_flag:
+                print("WAS data_available")
+                print(data_monitor[next_task_type])
 
-            data_monitor[next_task_type] += [output_filename]  # adding to available data new resource
 
-            print("NOW data_available")
-            print(data_monitor[next_task_type])
+                data_monitor[next_task_type] += [output_filename]  # adding to available data new resource
+
+                print("NOW data_available")
+                print(data_monitor[next_task_type])
+
+                resource_available_flag.notify_all()
 
         #########
 
         # release data
         result_tuple_list_proxy = None
-
-        worker_state_proxy.value = 'finished'
+        #TODO notify master process
+        # worker_state_proxy.value = 'finished'
 
 
 
@@ -178,14 +183,15 @@ class Worker:
 
 
             fork_args = (this_task_type,
-                next_step_task,
-                reader_function,
-                reader_args,
-                self.function_to_call,
-                writer_fn,
-                tamplater,
-                self.status,
-                data_monitor)
+                         next_step_task,
+                        reader_function,
+                        reader_args,
+                        self.function_to_call,
+                        writer_fn,
+                        tamplater,
+                        self.status,
+                        data_monitor,
+                         self.data_manager.resource_available_flag )
 
             fork_executor =  self.subprocess_execution
 
@@ -199,13 +205,14 @@ class Worker:
             print ()
             print ()
             forked_worker.start()
-            forked_worker.join()
+            # forked_worker.join()
 
             print ()
             print ()
             print("Forked finish")
             print ()
             print ()
+
             #
             # self.subprocess_execution(
             #     this_task_type=this_task_type,

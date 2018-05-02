@@ -19,6 +19,7 @@ class DataManager:
         self.available_data_monitor["combine"] = self.shared_data_manager.list()
         self.available_data_monitor["shuffle"] = self.shared_data_manager.list()
         self.available_data_monitor["finish"] = self.shared_data_manager.list()
+        self.resource_available_flag = multiprocessing.Condition()
 
 
 
@@ -139,4 +140,12 @@ class DataManager:
 
         except FileExistsError:
             print('file {} problem'.format(out_file_name))
-        pass
+
+    def has_available_data(self):
+        #TODO lock this if use more than one manager
+        result = False
+        for data_class, value in self.available_data_monitor.items():
+            if len(value) > 0:
+                result = True
+                break
+        return result
