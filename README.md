@@ -10,12 +10,10 @@ classes:
 MapReduceManeger
 Worker
 Task
-
-+ utils:
+DataManager
 
 example functions are presented:
 
 example_word_counter_mapper.py
-example_word_counter_combiner.py
 example_word_counter_shuffler.py
 example_word_counter_reducer.py

@@ -80,28 +80,6 @@ class MapReduceManager:
 
 
 
-    # mapper_task1_config = {
-    #     'task_type': 'map',
-    #     'ID': '1',
-    #     'executable_dir': 'example_word_counter_mapper',
-    #     'input_files': ['data.txt'],
-    #     'output_files': ['./mapping_result/map_{}_out.txt'],
-    #     'readind_diapasones_list':[()]
-    # }
-    #
-    # {
-    #     "active_mappers_up_to": 2,
-    #     "active_reducers_up_to": 1,
-    #     "active_combiners_up_to": 0,
-    #     "active_shufflers_up_to": 0,
-    #     "total_workers_number": 3,
-    #     "data_sources": ["data.txt"],
-    #     "mapper_file_name": "example_word_counter_mapper.py",
-    #     "reducer_file_name": "example_word_counter_reducer.py",
-    #     "memory_limit_total": "",
-    #     "memory_limit_per_process": ""
-    # }
-
     def make_reading_diapasones(self, files_list, consumers_n):
 
         # input_splits_list_example = [{
@@ -202,7 +180,7 @@ class MapReduceManager:
         if (not self.get_idle_task() is None ) or self.any_tasks_of_state('active') or self.any_tasks_of_state('waiting_resource'):
             answer = False
             have_finished = self.any_tasks_of_state('finished')
-            print ("Have finised tasks ? : [{}] ".format(have_finished) )
+            print ("Have finised some tasks ? : [{}] ".format(have_finished) )
         return answer
 
     def print_tasks_state(self):

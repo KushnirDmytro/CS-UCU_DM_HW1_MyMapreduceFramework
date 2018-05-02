@@ -5,7 +5,6 @@ from Task import Task
 from DataManager import DataManager
 import subprocess
 import multiprocessing
-# from subprocess import Popen, PIPE
 import sys
 import ctypes
 import importlib
@@ -50,21 +49,20 @@ class Worker:
             print("Task initialisation conflict from Worker {}".format(self.ID))
 
 
-    def subprocess_execution(self,
-                             this_task_type, next_task_type,
-                             reader_fun, reader_args,
-                             job_fun,
-                             writer_fun, tamplater,
+    def execute_in_subprocess(self,
+                              this_task_type, next_task_type,
+                              reader_fun, reader_args,
+                              job_fun,
+                              writer_fun, tamplater,
 
-                             worker_state_proxy, task_state_proxy,
+                              worker_state_proxy, task_state_proxy,
 
-                             data_monitor,
-                             resource_available_flag
-                             ):
+                              data_monitor,
+                              resource_available_flag
+                              ):
 
-        #TODO add state of task modification
 
-        worker_state_proxy.value = 'waiting_resource' #TODO out of subprocess
+        worker_state_proxy.value = 'waiting_resource'
         task_state_proxy.value = 'active'
 
         input_string_proxy = reader_fun (reader_args[0], reader_args[1] )
@@ -88,12 +86,6 @@ class Worker:
             job_rez = job_fun(input_string_proxy)
 
 
-        print('mapping elements returned :', str(len(job_rez)))
-        #########
-
-
-
-
         output_flag = "out"
 
         number_of_output_files = 1
@@ -112,12 +104,11 @@ class Worker:
             writer_fun(output_filename, job_rez[output_file_index])
 
             print("wrinting to ", output_filename, " DONE")
+            # release data
 
             with resource_available_flag:
-                print("WAS [{}] data_available".format(next_task_type))
-                print(data_monitor[next_task_type])
-
-
+                # print("WAS [{}] data_available".format(next_task_type))
+                # print(data_monitor[next_task_type])
                 data_monitor[next_task_type] += [output_filename]  # adding to available data new resource
 
                 print("NOW [{}] data_available".format(next_task_type) )
@@ -125,16 +116,8 @@ class Worker:
 
                 resource_available_flag.notify_all()
 
-        #########
-
-        # release data
-        result_tuple_list_proxy = None
-
         worker_state_proxy.value = 'finished'
         task_state_proxy.value = 'finished'
-        print()
-        print("Forked finish")
-        print()
 
 
 
@@ -152,8 +135,6 @@ class Worker:
 
             input_data_source = self.task.config.input_src
 
-            print(input_data_source)
-
             input_files = input_data_source.files
             input_partitions = input_data_source.partitions
 
@@ -165,9 +146,6 @@ class Worker:
             reader_function = self.data_manager.read_input_files
             reader_args = (input_files, input_partitions, input_string_proxy,)
 
-            result_tuple_list_proxy = resource_maneger.list()
-
-            # task_args = (input_string_proxy, result_tuple_list_proxy)
 
             writer_fn = self.data_manager.write_file
 
@@ -191,139 +169,25 @@ class Worker:
                         data_monitor,
                          self.data_manager.resource_available_flag )
 
-            fork_executor =  self.subprocess_execution
+            fork_executor =  self.execute_in_subprocess
+
+            print()
+            print()
+            print()
+            print()
 
             forked_worker = multiprocessing.Process(target=fork_executor,
                                                                          args=fork_args)
 
 
-            print ()
-            print ()
-            print("Forked Start")
-            print ()
             forked_worker.start()
-            # forked_worker.join()
 
-
-
-            #
-            #
-            # #TODO make iterationd over src list and launch this worker for all of them
-            # self.task.set_status('active')
-            #
-            # self.set_status('waiting_resource')
-            #
-            #
-            # pr = multiprocessing.Process(target=reader_function,
-            #                              args=reader_args)
-            #
-            # pr.start()
-            # pr.join()
-            #
-            # print("DATA AQUIRED:")
-            # print(len(input_string_proxy.value))
-            #
-            # ##########
-            #
-            #
-            # #launch task
-            #
-            # self.set_status('active')
-            #
-            #
-            #
-            #
-            #
-            #
-            # executable = multiprocessing.Process(target=self.function_to_call,
-            #                                      args=task_args)
-            #
-            # executable.start()
-            # executable.join()
-            #
-            # print('mapping elements returned :', str(len(result_tuple_list_proxy)))
-            # #########
-            #
-            # #clear memory
-            # input_string_proxy = None
-            #
-            # #write result
-            #
-            # self.set_status('waiting_resource')
-            #
-            #
-            # output_flag = "out"
-            #
-            #
-            # number_of_output_files = 1
-            # if (result_tuple_list_proxy[0][0] == 'output_files'):
-            #     number_of_output_files = result_tuple_list_proxy[0][1]
-            #     result_tuple_list_proxy = result_tuple_list_proxy[1:]
-            #
-            # for output_file_index in range ( number_of_output_files ):#different outputs to different files
-            #
-            #     output_filename = tamplater (
-            #         type = this_task_type, flag=output_flag, id=self.ID, input=0, output=output_file_index, file_ext='txt'
-            #     )
-            #
-            #     print("wrinting to ", output_filename)
-            #
-            #
-            #     writer_args = (output_filename,result_tuple_list_proxy[output_file_index])
-            #
-            #     writer_process = multiprocessing.Process(
-            #         target=writer_fn,
-            #         args=writer_args
-            #     )
-            #
-            #     writer_process.start()
-            #     writer_process.join()
-            #
-            #     print("wrinting to ", output_filename, " DONE")
-            #
-            #
-            #
-            #     print("WAS data_available[{}]".format(next_step_task) )
-            #     print(data_monitor)
-            #
-            #     data_monitor += [output_filename] #adding to available data new resource
-            #
-            #     print("NOW data_available[{}]".format(next_step_task))
-            #     print (data_monitor)
-            #
-            # #########
-            #
-            # #release data
-            # result_tuple_list_proxy = None
-            #
-            # self.set_status('finished')
-            #
-            #
-            # self.task.status = 'finished'
-            # #########
-            #
-            #
             # #TODO reuse same process in whole line (or concatenate pipeline and pass it to one)
-            #
-            #
-            # # process = subprocess.Process(
-            # #     [sys.executable,
-            # #      "-u",
-            # #      self.task.executable,
-            # #      self.task.read_from,
-            # #      self.task.write_to.format(self.task.ID)],
-            # #      stdout=subprocess.PIPE,
-            # #     bufsize=1)
-            #
-            # # todo manage notification when and how process ended
-            #
-            # # status = process.returncode
             # #todo manage return code and administrate worker's status
 
 
 
         except ChildProcessError:
-            #todo test if works
             raise ChildProcessError("failed to launch task {}__{}{} from worker {} ".format(self.task.executable,
                                                                                       self.task.name,
                                                                                       self.task.type,
@@ -331,17 +195,4 @@ class Worker:
         finally:
             pass #TODO
 
-
-
-
-
-#
-# start = time.perf_counter()
-#
-#
-#
-# mappers=[]
-# for i in range(int (config['mappers_n']) ):
-#     cmd.format(i)
-#     mappers.append(Popen([sys.executable, "-u", "example_word_counter_mapper.py", "data.txt", "map_worker_{}_.txt".format(i)], stdout=PIPE, bufsize=1))
 

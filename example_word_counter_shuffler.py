@@ -29,6 +29,6 @@ def shuffle (input_string_proxy,  consumers_number):
 
     end = time.perf_counter()
 
-    print("reducing words vector time: ", end - start)
+    print("shuffling words vector time: ", end - start)
 
     return result_list
