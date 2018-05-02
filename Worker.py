@@ -27,15 +27,6 @@ class Worker:
         print ("Hello from worker [{}] status [{}] task [{}]".format(self.ID, self.status, self.task))
 
 
-    # def read_from(self, filename, diapasone = None):
-    #     """
-    #     As we presume immutability of reading file, no need to prevent datarace
-    #     :param filename: name of file with inputs
-    #     :return: string of file content
-    #     """
-    #     # todo move to DM
-    #     #todo add .csv
-    #     pass
 
 
     def is_idle (self):
@@ -62,14 +53,12 @@ class Worker:
     def subprocess_execution(self,
                              this_task_type, next_task_type,
                              reader_fun, reader_args,
-                             job_fun, job_args,
+                             job_fun,
                              writer_fun, tamplater,
                              worker_state_proxy,
                              data_monitor
                              ):
 
-        # TODO make iterationd over src list and launch this worker for all of them
-        # self.task.set_status('active')
 
         worker_state_proxy.value = 'waiting_resource' #TODO out of subprocess
 
@@ -94,13 +83,6 @@ class Worker:
         else:
             job_rez = job_fun(input_string_proxy)
 
-
-
-        # executable = multiprocessing.Process(target=self.function_to_call,
-        #                                      args=task_args)
-
-        # executable.start()
-        # executable.join()
 
         print('mapping elements returned :', str(len(job_rez)))
         #########
@@ -175,7 +157,7 @@ class Worker:
 
             result_tuple_list_proxy = resource_maneger.list()
 
-            task_args = (input_string_proxy, result_tuple_list_proxy)
+            # task_args = (input_string_proxy, result_tuple_list_proxy)
 
             writer_fn = self.data_manager.write_file
 
@@ -191,22 +173,51 @@ class Worker:
             #                              worker_state_proxy,
             #                              data_monitor
             #                              ):
-            if this_task_type == 'shuffle':  # TODO yes, I know it is bad, but arcitecture is my weak spot
-                task_args = (input_string_proxy, result_tuple_list_proxy,
-                             int(self.data_manager.master_config['active_reducers_up_to']))
 
-            self.subprocess_execution(
-                this_task_type=this_task_type,
-                next_task_type= next_step_task,
-                reader_fun=reader_function,
-                reader_args=reader_args,
-                job_fun=self.function_to_call,
-                job_args=task_args,
-                writer_fun=writer_fn,
-                tamplater=tamplater,
-                worker_state_proxy=self.status,
-                data_monitor=data_monitor
-            )
+
+
+
+            fork_args = (this_task_type,
+                next_step_task,
+                reader_function,
+                reader_args,
+                self.function_to_call,
+                writer_fn,
+                tamplater,
+                self.status,
+                data_monitor)
+
+            fork_executor =  self.subprocess_execution
+
+            forked_worker = multiprocessing.Process(target=fork_executor,
+                                                                         args=fork_args)
+
+
+            print ()
+            print ()
+            print("Forked Start")
+            print ()
+            print ()
+            forked_worker.start()
+            forked_worker.join()
+
+            print ()
+            print ()
+            print("Forked finish")
+            print ()
+            print ()
+            #
+            # self.subprocess_execution(
+            #     this_task_type=this_task_type,
+            #     next_task_type= next_step_task,
+            #     reader_fun=reader_function,
+            #     reader_args=reader_args,
+            #     job_fun=self.function_to_call,
+            #     writer_fun=writer_fn,
+            #     tamplater=tamplater,
+            #     worker_state_proxy=self.status,
+            #     data_monitor=data_monitor
+            # )
 
 
 
