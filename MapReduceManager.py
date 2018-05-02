@@ -108,7 +108,7 @@ class MapReduceManager:
 
         input_splits_list = []
         files_n = len(files_list)
-        if consumers_n > files_n :
+        if consumers_n >= files_n :
             consumers_at_least = consumers_n // files_n #at_most = at_least+1
             files_with_additional_consumer = consumers_n % files_n
             files_without_aditional_consumer = files_n - files_with_additional_consumer
@@ -130,7 +130,9 @@ class MapReduceManager:
                     )
                     overall_conusmer_id+=1
 
-        else: #more files then  consumers
+        else:
+
+            #more files then  consumers
             #in this case we'll use file-by-file processing approach (reading from quiue) instead of indexing
             pass #TODO refactor it out (I've planned bigger function instead)
 
@@ -189,16 +191,16 @@ class MapReduceManager:
 
 
                 #TODO combine several files to one if possible
-                if (available_data > 1) and task_type == 'reduce': #taking two tasks to merge them
-                    src_file = self.data_manager.available_data_monitor[task_type][:2]
-                    #TODO problem, it gives list
+                # if (available_data > 1) and task_type == 'reduce': #taking two tasks to merge them
+                #     src_file = self.data_manager.available_data_monitor[task_type][:2]
+                #
+                #
+                #     self.data_manager.available_data_monitor[task_type].pop()
+                #     self.data_manager.available_data_monitor[task_type].pop()
+                # else:
+                src_file = [self.data_manager.available_data_monitor[task_type][0]]
 
-                    self.data_manager.available_data_monitor[task_type].pop()
-                    self.data_manager.available_data_monitor[task_type].pop()
-                else:
-                    src_file = [self.data_manager.available_data_monitor[task_type][0]]
-
-                    self.data_manager.available_data_monitor[task_type].pop()
+                self.data_manager.available_data_monitor[task_type].pop()
                 # .pop() is not working for proxy
 
 

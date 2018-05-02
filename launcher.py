@@ -40,7 +40,7 @@ print(mappers_configs)
 
 
 mas.spawn_task_from_config(task_config=mappers_configs[0])
-mas.spawn_task_from_config(task_config=mappers_configs[1])
+# mas.spawn_task_from_config(task_config=mappers_configs[1])
 
 mas.run()
 

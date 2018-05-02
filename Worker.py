@@ -60,7 +60,7 @@ class Worker:
 
 
     def subprocess_execution(self,
-                             this_task_type,
+                             this_task_type, next_task_type,
                              reader_fun, reader_args,
                              job_fun, job_args,
                              writer_fun, tamplater,
@@ -71,10 +71,10 @@ class Worker:
         # TODO make iterationd over src list and launch this worker for all of them
         # self.task.set_status('active')
 
-        worker_state_proxy.value = 'waiting_resource'
+        worker_state_proxy.value = 'waiting_resource' #TODO out of subprocess
 
-        input_string_proxy = ""
-        reader_fun (reader_args, input_string_proxy)
+
+        input_string_proxy = reader_fun (reader_args[0], reader_args[1] )
 
 
         print("DATA AQUIRED:")
@@ -86,12 +86,15 @@ class Worker:
 
         worker_state_proxy.value = 'active'
 
-        retur_list = []
-        if this_task_type == 'shuffle':  # TODO yes, I know it is bad, but arcitecture is my weak spot
-            job_args = (input_string_proxy, retur_list,
-                         int(self.data_manager.master_config['active_reducers_up_to']))
 
-        job_fun(job_args, retur_list)
+
+        if this_task_type == 'shuffle':  # TODO yes, I know it is bad, but arcitecture is my weak spot
+            job_rez = job_fun(input_string_proxy,
+                         int(self.data_manager.master_config['active_reducers_up_to']))
+        else:
+            job_rez = job_fun(input_string_proxy)
+
+
 
         # executable = multiprocessing.Process(target=self.function_to_call,
         #                                      args=task_args)
@@ -99,7 +102,7 @@ class Worker:
         # executable.start()
         # executable.join()
 
-        print('mapping elements returned :', str(len(retur_list)))
+        print('mapping elements returned :', str(len(job_rez)))
         #########
 
 
@@ -108,9 +111,9 @@ class Worker:
         output_flag = "out"
 
         number_of_output_files = 1
-        if (retur_list[0][0] == 'output_files'):
-            number_of_output_files = retur_list[0][1]
-            retur_list = retur_list[1:]
+        if (job_rez[0][0] == 'output_files'):
+            number_of_output_files = job_rez[0][1]
+            job_rez = job_rez[1:]
 
         for output_file_index in range(number_of_output_files):  # different outputs to different files
 
@@ -120,19 +123,19 @@ class Worker:
 
             print("wrinting to ", output_filename)
 
-            writer_args = (output_filename, retur_list[output_file_index])
+            # writer_args = (output_filename, job_rez[output_file_index])
 
-            writer_fun(writer_args)
+            writer_fun(output_filename, job_rez[output_file_index])
 
             print("wrinting to ", output_filename, " DONE")
 
             print("WAS data_available")
-            print(data_monitor)
+            print(data_monitor[next_task_type])
 
-            data_monitor += [output_filename]  # adding to available data new resource
+            data_monitor[next_task_type] += [output_filename]  # adding to available data new resource
 
             print("NOW data_available")
-            print(data_monitor)
+            print(data_monitor[next_task_type])
 
         #########
 
@@ -141,11 +144,8 @@ class Worker:
 
         worker_state_proxy.value = 'finished'
 
-        # self.task.status = 'finished'
 
 
-
-        pass
 
     def execute(self):
         """
@@ -165,7 +165,7 @@ class Worker:
             input_files = input_data_source.files
             input_partitions = input_data_source.partitions
 
-            data_monitor = self.data_manager.available_data_monitor[next_step_task]
+            data_monitor = self.data_manager.available_data_monitor
             resource_maneger = self.data_manager.shared_data_manager
 
             input_string_proxy = resource_maneger.Value(ctypes.c_char_p, "")
@@ -183,119 +183,146 @@ class Worker:
 
             #Aquire data
 
-            #TODO make iterationd over src list and launch this worker for all of them
-            self.task.set_status('active')
-
-            self.set_status('waiting_resource')
-
-
-            pr = multiprocessing.Process(target=reader_function,
-                                         args=reader_args)
-
-            pr.start()
-            pr.join()
-
-            print("DATA AQUIRED:")
-            print(len(input_string_proxy.value))
-
-            ##########
-
-
-            #launch task
-
-            self.set_status('active')
-
-
-
-
-            if this_task_type == 'shuffle': #TODO yes, I know it is bad, but arcitecture is my weak spot
+            # def subprocess_execution(self,
+            #                              this_task_type,
+            #                              reader_fun, reader_args,
+            #                              job_fun, job_args,
+            #                              writer_fun, tamplater,
+            #                              worker_state_proxy,
+            #                              data_monitor
+            #                              ):
+            if this_task_type == 'shuffle':  # TODO yes, I know it is bad, but arcitecture is my weak spot
                 task_args = (input_string_proxy, result_tuple_list_proxy,
                              int(self.data_manager.master_config['active_reducers_up_to']))
 
-            executable = multiprocessing.Process(target=self.function_to_call,
-                                                 args=task_args)
-
-            executable.start()
-            executable.join()
-
-            print('mapping elements returned :', str(len(result_tuple_list_proxy)))
-            #########
-
-            #clear memory
-            input_string_proxy = None
-
-            #write result
-
-            self.set_status('waiting_resource')
-
-
-            output_flag = "out"
-
-
-            number_of_output_files = 1
-            if (result_tuple_list_proxy[0][0] == 'output_files'):
-                number_of_output_files = result_tuple_list_proxy[0][1]
-                result_tuple_list_proxy = result_tuple_list_proxy[1:]
-
-            for output_file_index in range ( number_of_output_files ):#different outputs to different files
-
-                output_filename = tamplater (
-                    type = this_task_type, flag=output_flag, id=self.ID, input=0, output=output_file_index, file_ext='txt'
-                )
-
-                print("wrinting to ", output_filename)
-
-
-                writer_args = (output_filename,result_tuple_list_proxy[output_file_index])
-
-                writer_process = multiprocessing.Process(
-                    target=writer_fn,
-                    args=writer_args
-                )
-
-                writer_process.start()
-                writer_process.join()
-
-                print("wrinting to ", output_filename, " DONE")
+            self.subprocess_execution(
+                this_task_type=this_task_type,
+                next_task_type= next_step_task,
+                reader_fun=reader_function,
+                reader_args=reader_args,
+                job_fun=self.function_to_call,
+                job_args=task_args,
+                writer_fun=writer_fn,
+                tamplater=tamplater,
+                worker_state_proxy=self.status,
+                data_monitor=data_monitor
+            )
 
 
 
-                print("WAS data_available[{}]".format(next_step_task) )
-                print(data_monitor)
-
-                data_monitor += [output_filename] #adding to available data new resource
-
-                print("NOW data_available[{}]".format(next_step_task))
-                print (data_monitor)
-
-            #########
-
-            #release data
-            result_tuple_list_proxy = None
-
-            self.set_status('finished')
-
-
-            self.task.status = 'finished'
-            #########
-
-
-            #TODO reuse same process in whole line (or concatenate pipeline and pass it to one)
-
-
-            # process = subprocess.Process(
-            #     [sys.executable,
-            #      "-u",
-            #      self.task.executable,
-            #      self.task.read_from,
-            #      self.task.write_to.format(self.task.ID)],
-            #      stdout=subprocess.PIPE,
-            #     bufsize=1)
-
-            # todo manage notification when and how process ended
-
-            # status = process.returncode
-            #todo manage return code and administrate worker's status
+            #
+            #
+            # #TODO make iterationd over src list and launch this worker for all of them
+            # self.task.set_status('active')
+            #
+            # self.set_status('waiting_resource')
+            #
+            #
+            # pr = multiprocessing.Process(target=reader_function,
+            #                              args=reader_args)
+            #
+            # pr.start()
+            # pr.join()
+            #
+            # print("DATA AQUIRED:")
+            # print(len(input_string_proxy.value))
+            #
+            # ##########
+            #
+            #
+            # #launch task
+            #
+            # self.set_status('active')
+            #
+            #
+            #
+            #
+            #
+            #
+            # executable = multiprocessing.Process(target=self.function_to_call,
+            #                                      args=task_args)
+            #
+            # executable.start()
+            # executable.join()
+            #
+            # print('mapping elements returned :', str(len(result_tuple_list_proxy)))
+            # #########
+            #
+            # #clear memory
+            # input_string_proxy = None
+            #
+            # #write result
+            #
+            # self.set_status('waiting_resource')
+            #
+            #
+            # output_flag = "out"
+            #
+            #
+            # number_of_output_files = 1
+            # if (result_tuple_list_proxy[0][0] == 'output_files'):
+            #     number_of_output_files = result_tuple_list_proxy[0][1]
+            #     result_tuple_list_proxy = result_tuple_list_proxy[1:]
+            #
+            # for output_file_index in range ( number_of_output_files ):#different outputs to different files
+            #
+            #     output_filename = tamplater (
+            #         type = this_task_type, flag=output_flag, id=self.ID, input=0, output=output_file_index, file_ext='txt'
+            #     )
+            #
+            #     print("wrinting to ", output_filename)
+            #
+            #
+            #     writer_args = (output_filename,result_tuple_list_proxy[output_file_index])
+            #
+            #     writer_process = multiprocessing.Process(
+            #         target=writer_fn,
+            #         args=writer_args
+            #     )
+            #
+            #     writer_process.start()
+            #     writer_process.join()
+            #
+            #     print("wrinting to ", output_filename, " DONE")
+            #
+            #
+            #
+            #     print("WAS data_available[{}]".format(next_step_task) )
+            #     print(data_monitor)
+            #
+            #     data_monitor += [output_filename] #adding to available data new resource
+            #
+            #     print("NOW data_available[{}]".format(next_step_task))
+            #     print (data_monitor)
+            #
+            # #########
+            #
+            # #release data
+            # result_tuple_list_proxy = None
+            #
+            # self.set_status('finished')
+            #
+            #
+            # self.task.status = 'finished'
+            # #########
+            #
+            #
+            # #TODO reuse same process in whole line (or concatenate pipeline and pass it to one)
+            #
+            #
+            # # process = subprocess.Process(
+            # #     [sys.executable,
+            # #      "-u",
+            # #      self.task.executable,
+            # #      self.task.read_from,
+            # #      self.task.write_to.format(self.task.ID)],
+            # #      stdout=subprocess.PIPE,
+            # #     bufsize=1)
+            #
+            # # todo manage notification when and how process ended
+            #
+            # # status = process.returncode
+            # #todo manage return code and administrate worker's status
 
 
 

@@ -1,5 +1,5 @@
 {
-  "active_mappers_up_to": 2,
+  "active_mappers_up_to": 1,
   "active_reducers_up_to":2,
   "use_combiners":"True",
 

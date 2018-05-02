@@ -90,7 +90,7 @@ class DataManager:
 
 
 
-    def read_input_files(self, input_files, input_partitions, read_to):
+    def read_input_files(self, input_files=[], input_partitions=[]):
         """
         reading policy used: read up to diapasone end + 1 line, then this line will be skipped in the next chunk
         """
@@ -114,7 +114,8 @@ class DataManager:
                     obtained_stings_list.append(myfile.read(end_pos-start_pos))
                     # read_to.value += '\n' + myfile.read(end_pos-start_pos)
 
-        read_to.value = os.linesep.join(obtained_stings_list)
+        print("reading_complete")
+        return os.linesep.join(obtained_stings_list)
 
 
 
