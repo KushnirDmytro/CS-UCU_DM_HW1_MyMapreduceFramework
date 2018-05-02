@@ -24,10 +24,10 @@ class Task:
             self.input_src = Task.Resources(task_config_dict['input_src'])
 
 
-    def __init__(self, task_config_dict):
+    def __init__(self, task_config_dict, stateProxy):
         self.config = self.TaskConfig(task_config_dict)
 
-        self.status = "idle" #task_config_dict ['']
+        self.status = stateProxy #task_config_dict ['']
 
 
         #todo ceckers and exceptions!
@@ -37,11 +37,11 @@ class Task:
         print("hello from new [%s] task ID:[%s] " % (self.config.task_type , self.config.ID))
 
     def is_idle(self):
-        return self.status == 'idle'
+        return self.status.value == 'idle'
 
     def set_status(self, status):
         if status in self.proces_status:
-            self.status = status
+            self.status.value = status
         else:
             raise ValueError("No such value [{}] among possible states".format(status))
 

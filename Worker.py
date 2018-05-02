@@ -55,13 +55,16 @@ class Worker:
                              reader_fun, reader_args,
                              job_fun,
                              writer_fun, tamplater,
-                             worker_state_proxy,
+
+                             worker_state_proxy, task_state_proxy,
+
                              data_monitor,
                              resource_available_flag
                              ):
 
+        #TODO add state of task modification
 
-        # worker_state_proxy.value = 'waiting_resource' #TODO out of subprocess
+        worker_state_proxy.value = 'waiting_resource' #TODO out of subprocess
 
 
         input_string_proxy = reader_fun (reader_args[0], reader_args[1] )
@@ -74,7 +77,7 @@ class Worker:
 
         # launch task
 
-        # worker_state_proxy.value = 'active'
+        worker_state_proxy.value = 'active'
 
 
 
@@ -106,20 +109,18 @@ class Worker:
 
             print("wrinting to ", output_filename)
 
-            # writer_args = (output_filename, job_rez[output_file_index])
-
             writer_fun(output_filename, job_rez[output_file_index])
 
             print("wrinting to ", output_filename, " DONE")
 
             with resource_available_flag:
-                print("WAS data_available")
+                print("WAS [{}] data_available".format(next_task_type))
                 print(data_monitor[next_task_type])
 
 
                 data_monitor[next_task_type] += [output_filename]  # adding to available data new resource
 
-                print("NOW data_available")
+                print("NOW [{}] data_available".format(next_task_type) )
                 print(data_monitor[next_task_type])
 
                 resource_available_flag.notify_all()
@@ -128,8 +129,11 @@ class Worker:
 
         # release data
         result_tuple_list_proxy = None
-        #TODO notify master process
-        # worker_state_proxy.value = 'finished'
+
+        worker_state_proxy.value = 'finished'
+        print()
+        print("Forked finish")
+        print()
 
 
 
@@ -168,16 +172,9 @@ class Worker:
 
             tamplater = self.data_manager.build_template_for_output_data_file
 
-            #Aquire data
+            task_status_proxy = self.task.status
 
-            # def subprocess_execution(self,
-            #                              this_task_type,
-            #                              reader_fun, reader_args,
-            #                              job_fun, job_args,
-            #                              writer_fun, tamplater,
-            #                              worker_state_proxy,
-            #                              data_monitor
-            #                              ):
+            #Aquire data
 
 
 
@@ -189,7 +186,7 @@ class Worker:
                         self.function_to_call,
                         writer_fn,
                         tamplater,
-                        self.status,
+                        self.status,  task_status_proxy,
                         data_monitor,
                          self.data_manager.resource_available_flag )
 
@@ -203,28 +200,8 @@ class Worker:
             print ()
             print("Forked Start")
             print ()
-            print ()
             forked_worker.start()
             # forked_worker.join()
-
-            print ()
-            print ()
-            print("Forked finish")
-            print ()
-            print ()
-
-            #
-            # self.subprocess_execution(
-            #     this_task_type=this_task_type,
-            #     next_task_type= next_step_task,
-            #     reader_fun=reader_function,
-            #     reader_args=reader_args,
-            #     job_fun=self.function_to_call,
-            #     writer_fun=writer_fn,
-            #     tamplater=tamplater,
-            #     worker_state_proxy=self.status,
-            #     data_monitor=data_monitor
-            # )
 
 
 

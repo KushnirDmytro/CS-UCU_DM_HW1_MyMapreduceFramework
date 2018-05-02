@@ -45,7 +45,6 @@ mas.spawn_task_from_config(task_config=mappers_configs[0])
 
 mas.run()
 
-mas.run()
 
 # print("Launcher finished ==============================================")
 
@@ -53,6 +52,3 @@ mas.run()
 
 # mas.run()
 
-#TODO GLOBAL!!!
-# TODO make that subprocess got kind of pipeline to execute -> reader, mapper, writer
-# TODO therefore possible to change to mapper -> writer -> combiner ->  -> writer

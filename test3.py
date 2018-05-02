@@ -104,3 +104,11 @@ dct2['5'] = 4
 for el, val in dct2.items():
     print (el)
     print(val)
+
+def get_a_b():
+    return "a",'B'
+
+a,b = get_a_b()
+
+print(a)
+print(b)

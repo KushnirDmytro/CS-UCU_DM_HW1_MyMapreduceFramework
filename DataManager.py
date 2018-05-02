@@ -1,5 +1,6 @@
 import os
 import multiprocessing
+import ctypes
 #TODO extract reader and writer to utils class
 
 class DataManager:
@@ -29,6 +30,9 @@ class DataManager:
 
         print("INIT OK ResourceManager" + id)
 
+
+    def create_state_proxy(self, strVal):
+        return self.shared_data_manager.Value(ctypes.c_char_p, strVal)
 
     def read_txt(self, filename):
         pass
@@ -144,8 +148,22 @@ class DataManager:
     def has_available_data(self):
         #TODO lock this if use more than one manager
         result = False
-        for data_class, value in self.available_data_monitor.items():
+        for data_class, value in self.available_data_monitor.items()[:-1]: #avoiding key "finished"
             if len(value) > 0:
                 result = True
                 break
         return result
+
+
+    def get_available_task_and_data(self):
+        available_data = None
+        available_data_type = None
+
+        for task_name, value in self.available_data_monitor.items()[:-1]:
+            if len(value) > 0:
+                available_data = [self.available_data_monitor[task_name][0]]
+                self.available_data_monitor[task_name].pop()
+                available_data_type = task_name
+                break
+
+        return available_data, available_data_type
